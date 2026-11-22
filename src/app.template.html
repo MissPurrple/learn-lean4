@@ -4,6 +4,10 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Lean Blockchain Dash</title>
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#2f4fd0">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
 <style>
 :root{
   --bg:#f7f7f4; --fg:#1b2230; --muted:#566074; --card:#ffffff; --line:#d6dae3;
@@ -103,6 +107,17 @@ details{margin:.5rem 0}
 summary{cursor:pointer;font-weight:600}
 .msg{min-height:1.4rem;font-weight:600}
 .warn{background:var(--warn-bg);border:1px solid var(--warn);color:var(--fg);padding:.5rem .8rem;border-radius:.5rem;margin:.6rem 0}
+.tipbox{background:var(--accent-soft);border-left:5px solid var(--accent);border-radius:.5rem;padding:.6rem .9rem;margin:.6rem 0}
+.summary{background:var(--good-bg);border-left:5px solid var(--good);border-radius:.5rem;padding:.6rem .9rem;margin:.6rem 0}
+dl.terms{margin:.3rem 0}
+dl.terms dt{font-weight:700;margin-top:.55rem}
+dl.terms dd{margin:.1rem 0 0 0;color:var(--fg)}
+ul.marks{list-style:none;padding:0}
+ul.marks li{padding:.25rem 0;border-bottom:1px solid var(--line)}
+.m-ok{color:var(--good);font-weight:700}.m-no{color:var(--bad);font-weight:700}
+.tbl{overflow-x:auto}
+.stat small{color:var(--muted)}
+input[type=search]{font:inherit;width:100%;max-width:26rem;padding:.45rem .6rem;border:1px solid var(--line);border-radius:.5rem;background:var(--card);color:var(--fg)}
 @media (max-width:560px){ .block{width:100%} .chain li{width:100%} .chain li+li::before{content:"↓"; padding:0 .45rem;} .chain{flex-direction:column} .chain li{flex-direction:column;align-items:stretch} }
 @media print{ header.top,.stepper,button{display:none} }
 </style>
@@ -171,7 +186,7 @@ function tagName(t) { return t.replace(/-/g, " "); }
 function link(text, href) { return h("a", { href, target: "_blank", rel: "noopener noreferrer" }, text); }
 
 /* ===================== state + storage ===================== */
-function blank() { return { v: 1, created: Date.now(), log: [], units: {}, cards: {}, secs: {}, faded: {}, notes: "" }; }
+function blank() { return { v: 1, created: Date.now(), log: [], units: {}, cards: {}, secs: {}, faded: {}, notes: "", lastBackup: 0 }; }
 let S = blank();
 let storageOK = true;
 let skippedOnLoad = 0;
@@ -195,7 +210,9 @@ function sanitize(o) {
   s.log = s.log.slice(-LOG_CAP);
   if (o.units && typeof o.units === "object") for (const id of Object.keys(UMAP)) {
     const x = o.units[id]; if (!x || typeof x !== "object") continue;
-    s.units[id] = { best: Math.max(0, Math.min(100, num(x.best) || 0)), mastered: x.mastered === true, attempts: Math.max(0, Math.floor(num(x.attempts) || 0)), practice: x.practice === true };
+    const hist = (Array.isArray(x.history) ? x.history : []).filter(a => a && num(a.t) !== null && num(a.right) !== null && num(a.total) !== null && a.total > 0 && a.right >= 0 && a.right <= a.total)
+      .map(a => ({ t: a.t, right: Math.floor(a.right), total: Math.floor(a.total) })).slice(-30);
+    s.units[id] = { best: Math.max(0, Math.min(100, num(x.best) || 0)), mastered: x.mastered === true, attempts: Math.max(0, Math.floor(num(x.attempts) || 0)), practice: x.practice === true, history: hist };
   }
   if (o.cards && typeof o.cards === "object") for (const id of Object.keys(QMAP)) {
     const c = o.cards[id]; if (!c || typeof c !== "object") continue;
@@ -210,6 +227,7 @@ function sanitize(o) {
     s.faded[id] = { first: f.first === true ? true : f.first === false ? false : null, tries: Math.max(0, Math.floor(num(f.tries) || 0)) };
   }
   s.notes = typeof o.notes === "string" ? o.notes.slice(0, 5000) : "";
+  s.lastBackup = num(o.lastBackup) || 0;
   s._skipped = skipped;
   return s;
 }
@@ -225,7 +243,7 @@ function save() {
   try { localStorage.setItem(KEY, JSON.stringify(S)); lastSave = Date.now(); }
   catch (e) { storageOK = false; }
 }
-function unitState(id) { return S.units[id] || (S.units[id] = { best: 0, mastered: false, attempts: 0, practice: false }); }
+function unitState(id) { const u = S.units[id] || (S.units[id] = { best: 0, mastered: false, attempts: 0, practice: false, history: [] }); if (!u.history) u.history = []; return u; }
 function isMastered(u) { return !!(S.units[u.id] && S.units[u.id].mastered); }
 function unitStatus(i) {
   if (isMastered(UNITS[i])) return "mastered";
@@ -288,7 +306,7 @@ function updateToday() {
 }
 
 /* ===================== layout / routing ===================== */
-const NAV = [["map", "Course map"], ["review", "Review"], ["report", "Weekly report"], ["method", "Method"], ["sources", "Sources & setup"], ["data", "Save / restore"]];
+const NAV = [["start", "Start here"], ["map", "Course map"], ["progress", "My progress"], ["review", "Review"], ["report", "Weekly report"], ["glossary", "Glossary"], ["method", "Method"], ["sources", "Sources"], ["data", "Backup"]];
 let currentRoute = "map";
 function renderNav() {
   const nav = document.getElementById("nav"); nav.replaceChildren();
@@ -304,9 +322,9 @@ function renderNav() {
 const ui = { unit: null };
 function route() {
   const parts = location.hash.replace(/^#\/?/, "").split("/");
-  let r = parts[0] || "map";
+  let r = parts[0] || (S.log.length ? "map" : "start");
   if (r === "unit" && !(UMAP[parts[1]] && unitStatus(UNITS.indexOf(UMAP[parts[1]])) !== "locked")) { r = "map"; }
-  if (!["map", "unit", "review", "report", "method", "sources", "data"].includes(r)) r = "map";
+  if (!["start", "map", "unit", "progress", "review", "report", "glossary", "method", "sources", "data"].includes(r)) r = "map";
   const wanted = r === "unit" ? "#/unit/" + parts[1] : "#/" + r;
   if (location.hash !== wanted) { history.replaceState(null, "", wanted); }   // fix the address bar if we redirected
   currentRoute = r;
@@ -320,6 +338,9 @@ function route() {
     else if (r === "method") viewMethod(app);
     else if (r === "sources") viewSources(app);
     else if (r === "data") viewData(app);
+    else if (r === "start") viewStart(app);
+    else if (r === "progress") viewProgress(app);
+    else if (r === "glossary") viewGlossary(app);
   } catch (err) {
     app.replaceChildren(h("div", { class: "warn" }, "Something went wrong drawing this page: " + err.message + ". Try the Course map link."));
     console.error(err);
@@ -341,6 +362,8 @@ function viewMap(app) {
   app.append(h("h1", null, "Lean 4 for blockchain"));
   app.append(h("p", { class: "muted" }, "First-year university level. Ethereum (Solidity, the EVM) and Solana (Rust) are used as the running examples."));
   if (!storageOK) app.append(h("div", { class: "warn" }, "Your browser is blocking saved progress for this page, so nothing will be remembered after you close it. Use Save / restore to copy your progress out as text."));
+  if (!S.log.length) app.append(h("div", { class: "banner" }, h("b", null, "New here? "), "Read ", h("a", { href: "#/start" }, "Start here"), " first. It explains how everything works, step by step. Then begin with Unit 0, which has no coding."));
+  if (S.log.length >= 10 && Date.now() - S.lastBackup > 7 * DAY) app.append(h("div", { class: "warn" }, "You have not saved a backup file in the last 7 days. Go to ", h("a", { href: "#/data" }, "Backup"), " and press Save backup file. It takes one click."));
   if (skippedOnLoad) app.append(h("div", { class: "warn" }, skippedOnLoad + " damaged progress entries were skipped when loading."));
   app.append(h("div", { class: "card" }, h("b", null, "Today's plan: "), planLine()));
   app.append(paceBanner());
@@ -467,16 +490,20 @@ function viewUnit(app, u, fresh) {
   }
   const pace = paceInfo().mode;
   const si = STEPS.findIndex(s => s[0] === st.step);
+  body.append(h("div", { class: "tipbox", html: STEP_HELP[st.step] }));
   if (st.step === "goals") {
     body.append(h("div", { class: "card" }, h("h2", null, "By the end of this unit you can:"), h("ul", null, u.goals.map(g => h("li", null, g)))));
+    if (u.terms && u.terms.length) body.append(h("div", { class: "card" }, h("h2", null, "Words to know"), termsList(u)));
     if (pace !== "steady") body.append(paceBanner());
   } else if (st.step === "explain") {
     const tmp = document.createElement("div"); tmp.innerHTML = u.explain;
     const blocks = Array.from(tmp.children);
     if (st.shown === null) st.shown = pace === "support" ? 1 : blocks.length;
+    if (u.summary) body.append(h("div", { class: "summary", html: "<b>In short:</b> " + u.summary }));
     const card = h("div", { class: "card explain" });
     blocks.slice(0, st.shown).forEach(b => card.append(b));
     body.append(card);
+    if (st.shown >= blocks.length && u.terms && u.terms.length) body.append(h("details", { class: "card" }, h("summary", null, "Words to know in this unit"), termsList(u)));
     if (st.shown < blocks.length) {
       body.append(h("p", { class: "muted" }, "Support mode: idea " + st.shown + " of " + blocks.length + "."));
       body.append(h("button", { onclick: () => { st.shown++; redraw(); } }, "Next idea"));
@@ -526,7 +553,7 @@ function viewUnit(app, u, fresh) {
     renderQuizStep(body, u, st, go);
   } else if (st.step === "practice") {
     const p = u.practice, us = unitState(u.id);
-    const card = h("div", { class: "card" }, h("h2", null, "Practice in VS Code"), h("p", { html: p.task }));
+    const card = h("div", { class: "card" }, h("h2", null, "Practice"), h("p", { html: p.task }), h("p", { class: "muted" }, "Lean Playground: ", link("live.lean-lang.org", "https://live.lean-lang.org/"), " (needs internet, nothing to install)."));
     const det = h("details", null, h("summary", null, "Show expected result"), h("pre", { class: "out" }, p.expected));
     const cb = h("input", { type: "checkbox", id: "pdone", onchange: ev => { us.practice = ev.target.checked; save(); } });
     cb.checked = !!us.practice;
@@ -556,6 +583,7 @@ function renderQuizStep(body, u, st, go) {
     const right = results.filter(r => r.ok).length, p = pct(right, results.length);
     const was = us.mastered;
     us.attempts++; us.best = Math.max(us.best, p);
+    us.history.push({ t: Date.now(), right, total: results.length }); us.history = us.history.slice(-30);
     const passed = p >= PASS_PCT;
     if (passed) us.mastered = true;
     save(); renderNav();
@@ -563,6 +591,10 @@ function renderQuizStep(body, u, st, go) {
     const card = h("section", { class: "card", "aria-label": "Quiz result" });
     card.append(h("h2", null, passed ? "✓ Unit mastered" : "Not there yet"));
     card.append(h("p", null, "You scored " + right + " of " + results.length + " (" + p + "%). The gate is " + PASS_PCT + "%. Your best is " + us.best + "%."));
+    card.append(h("h3", null, "Your answers"));
+    card.append(h("ul", { class: "marks" }, results.map((r, i) => h("li", null,
+      h("span", { class: r.ok ? "m-ok" : "m-no" }, r.ok ? "✓ Right" : "✗ Missed"), " · Question " + (i + 1) + " · " + tagName(r.it.q.tag) + " · you said: " + CONF_LABEL[r.conf]))));
+    card.append(h("p", { class: "muted" }, "All of this is saved. See ", h("a", { href: "#/progress" }, "My progress"), " for every attempt."));
     const idx = UNITS.indexOf(u);
     if (passed) {
       if (!was) card.append(h("p", null, idx + 1 < UNITS.length ? "Unit " + UNITS[idx + 1].n + " is now unlocked." : "That was the last unit. Keep your reviews going."));
@@ -716,6 +748,186 @@ function viewReport(app) {
   refresh();
 }
 
+/* ===================== helpers: terms, backup, storage ===================== */
+function termsList(u) {
+  const dl = h("dl", { class: "terms" });
+  u.terms.forEach(([t, d]) => { dl.append(h("dt", { html: t }), h("dd", { html: d })); });
+  return dl;
+}
+let persisted = null;
+function persistNote() {
+  if (persisted === true) return "Storage protection: ON. Your browser has promised not to clear this data automatically.";
+  if (persisted === false) return "Storage protection: not granted. Your browser may clear this data if you clear site data or run low on space. That is why backup files matter.";
+  return "Storage protection: unknown on this browser. Keep a backup file to be safe.";
+}
+function downloadBackup() {
+  S.lastBackup = Date.now(); save();
+  const blob = new Blob([JSON.stringify(S)], { type: "application/json" });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = "lean-dash-backup-" + dayKey(Date.now()) + ".json";
+  document.body.append(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+}
+function doImport(text, msg) {
+  try {
+    if (!text.trim()) throw new Error("Paste saved progress into the box first.");
+    const s = sanitize(JSON.parse(text));
+    if (!confirm("Replace the progress in this browser with this data? This cannot be undone.")) return;
+    const sk = s._skipped; delete s._skipped; S = s; save(); renderNav(); updateToday();
+    msg.textContent = "✓ Imported " + S.log.length + " log entries" + (sk ? " (" + sk + " damaged entries skipped)" : "") + ".";
+  } catch (e) {
+    msg.textContent = "Import failed: " + (e instanceof SyntaxError ? "that is not valid progress text (it must be the exact text from Export or a backup file)." : e.message);
+  }
+}
+let deferredInstall = null;
+addEventListener("beforeinstallprompt", ev => { ev.preventDefault(); deferredInstall = ev; });
+
+/* ===================== VIEW: start here ===================== */
+function viewStart(app) {
+  app.append(h("h1", null, "Start here"));
+  app.append(h("p", null, "Welcome. You do not need any experience. This page explains how everything works. Read it once, then go to Unit 0."));
+  const card = (title, ...kids) => h("div", { class: "card" }, h("h2", null, title), ...kids);
+  app.append(card("What this is",
+    h("p", null, "A course that teaches you ", h("b", null, "Lean 4"), " (a programming language that can also check mathematical proofs) using examples from blockchains: Ethereum and Solana. It starts from zero. Unit 0 has no coding at all."),
+    h("p", null, "The dashboard keeps track of how you are doing. It remembers every answer, shows you what to practise again, and adjusts to your pace.")));
+  app.append(card("How each unit works",
+    h("p", null, "Every unit has seven steps. You can see them as buttons along the top of the unit. Go through them in order:"),
+    h("ol", null,
+      h("li", null, h("b", null, "Goals"), ": what you will be able to do, and the words you will meet."),
+      h("li", null, h("b", null, "Explain"), ": the ideas in plain language."),
+      h("li", null, h("b", null, "Worked example"), ": real Lean code. First you guess what it will print. Then you see what Lean really printed."),
+      h("li", null, h("b", null, "Bridge"), ": how the same idea looks in Solidity (Ethereum) or Rust (Solana). Just read it."),
+      h("li", null, h("b", null, "Fill the blank"), ": finish one small piece of code."),
+      h("li", null, h("b", null, "Mastery quiz"), ": a few questions. Score 80% or more to unlock the next unit."),
+      h("li", null, h("b", null, "Practice"), ": try the code yourself in the Lean Playground.")),
+    h("p", null, "Each step starts with a blue box that says exactly what to do.")));
+  app.append(card("Getting questions wrong is part of it",
+    h("p", null, "Every answer is saved, right or wrong. After a quiz you see a ✓ or ✗ for every question. If you score under 80% you see the questions you missed with an explanation of each, and you can retake the quiz."),
+    h("p", null, "The ", h("a", { href: "#/progress" }, "My progress"), " page lists every attempt, your score each time, and the questions that still need work. Questions you get wrong come back on the ", h("a", { href: "#/review" }, "Review"), " page, so you practise exactly what you find hard."),
+    h("p", null, "Before you check each answer you pick Sure, Unsure or Guessing. That is so you can spot the answers you were sure about but got wrong. Those are the most useful mistakes.")));
+  const installKids = [
+    h("p", null, "This page works offline. Once it has loaded you do not need internet to study (only the Lean Playground and the links need internet)."),
+    h("p", null, "If it is hosted on a web address (one that starts with ", h("code", null, "https://"), "), Brave can install it like an app, with its own icon and window. Look for an ", h("b", null, "Install"), " icon at the right end of the address bar (it looks like a screen with a down arrow), or open the Brave menu and look for an Install item for this page. Once installed you can open it from your Start menu (Windows) or Applications folder (Mac), and it works without internet."),
+    h("p", { class: "muted" }, "If you opened this as a file from your computer you will not see an Install option. That is fine: it still works, in the browser.")
+  ];
+  if (deferredInstall) installKids.push(h("button", { onclick: async () => { try { deferredInstall.prompt(); await deferredInstall.userChoice; } catch (e) { /* ignore */ } deferredInstall = null; route(); } }, "Install as an app"));
+  app.append(card("Using it as a desktop app, offline", ...installKids));
+  app.append(card("Where your progress is saved",
+    h("p", null, "Inside this browser (or this installed app), on this computer. Nobody else can see it and nothing is sent anywhere. Because of that:"),
+    h("ul", null,
+      h("li", null, "Always use the same browser or the same installed app. A different browser or computer starts empty."),
+      h("li", null, "If you clear your browser's site data, your progress is erased."),
+      h("li", null, "So once a week go to ", h("a", { href: "#/data" }, "Backup"), " and press ", h("b", null, "Save backup file"), ". If anything is ever lost, you load that file and everything comes back."))));
+  app.append(card("Running Lean code yourself",
+    h("p", null, h("b", null, "Easiest: the Lean Playground."), " Open ", link("live.lean-lang.org", "https://live.lean-lang.org/"), " in your browser. Nothing to install. Delete what is in the editor, type or paste code, and the results appear next to it. It needs internet and does not save your code."),
+    h("p", null, "Later, if you want to work on your own computer, the ", h("a", { href: "#/sources" }, "Sources"), " page shows how to set up VS Code."),
+    h("p", null, "Lean's own website recommends the ", link("Natural Number Game", "https://adam.math.hhu.de/#/g/leanprover-community/NNG4"), " for beginners. It is a free game in your browser. It is a good thing to try alongside this course.")));
+  app.append(card("If you feel lost",
+    h("p", null, "That is normal, and it is not a sign that you are bad at this. Look in the ", h("b", null, "Words to know"), " box and the ", h("a", { href: "#/glossary" }, "Glossary"), ". Read the explanation again. The dashboard also slows down by itself: if your recent answers go badly it switches to Support mode, which shows the explanation one idea at a time and puts hints on every question."),
+    h("p", null, "Once a week the ", h("a", { href: "#/report" }, "Weekly report"), " lets you copy a summary and paste it to Claude, who can then improve the dashboard for you.")));
+  app.append(h("a", { class: "btn", href: "#/unit/u0" }, "Go to Unit 0"));
+}
+
+/* ===================== VIEW: my progress ===================== */
+function viewProgress(app) {
+  app.append(h("h1", null, "My progress"));
+  const ans = S.log.filter(e => e.kind !== "faded");
+  const right = ans.filter(e => e.ok).length;
+  const mins = Object.values(S.secs).reduce((a, b) => a + b, 0) / 60;
+  const stat = (big, small) => h("div", { class: "stat" }, h("b", null, big), h("small", null, small));
+  app.append(h("div", { class: "grid2" },
+    stat(UNITS.filter(isMastered).length + " of " + UNITS.length, "units mastered"),
+    stat(String(ans.length), "answers so far"),
+    stat(ans.length ? pct(right, ans.length) + "%" : "–", "of your answers were right"),
+    stat(Math.round(mins) + " min", "active study time")));
+  if (!ans.length) {
+    app.append(h("div", { class: "card" }, h("p", null, "Nothing to show yet. Once you answer quiz questions, every result is listed here: what you got right, what you missed, and how your scores change from attempt to attempt."), h("a", { class: "btn", href: "#/start" }, "Start here")));
+    return;
+  }
+  // scores by unit
+  app.append(h("h2", null, "Quiz scores by unit"));
+  const rows = UNITS.map((u, i) => {
+    const us = S.units[u.id] || { best: 0, attempts: 0, history: [] };
+    const hist = us.history || [];
+    const last = hist.length ? hist[hist.length - 1] : null;
+    const st = unitStatus(i);
+    return h("tr", null,
+      h("td", null, h("a", { href: st === "locked" ? "#/map" : "#/unit/" + u.id }, "Unit " + u.n), " " + u.title),
+      h("td", null, st === "mastered" ? "✓ Mastered" : st === "open" ? "Open" : "Locked"),
+      h("td", null, String(us.attempts || 0)),
+      h("td", null, last ? pct(last.right, last.total) + "%" : "–"),
+      h("td", null, us.attempts ? us.best + "%" : "–"),
+      h("td", null, hist.length ? hist.map(a => h("div", null, dayKey(a.t) + ": " + a.right + "/" + a.total + " (" + pct(a.right, a.total) + "%)")) : "–"));
+  });
+  app.append(h("div", { class: "tbl" }, h("table", null,
+    h("thead", null, h("tr", null, ["Unit", "Status", "Attempts", "Latest", "Best", "Every attempt"].map(t => h("th", null, t)))),
+    h("tbody", null, rows))));
+  // per question
+  const qs = {};
+  ans.forEach(e => { const x = qs[e.q] || (qs[e.q] = { r: 0, w: 0, last: null }); if (e.ok) x.r++; else x.w++; x.last = e.ok; });
+  const order = {}; let k = 0; UNITS.forEach(u => { u.quiz.concat([u.challenge]).forEach(q => { order[q.id] = k++; }); });
+  const list = Object.keys(qs).filter(id => QMAP[id]).sort((a, b) => order[a] - order[b]);
+  const qtext = id => { const q = QMAP[id].q; return plain(q.q) + (q.code ? "  [" + q.code.replace(/\s+/g, " ") + "]" : ""); };
+  const need = list.filter(id => qs[id].last === false);
+  app.append(h("h2", null, "Questions that need work (" + need.length + ")"));
+  if (!need.length) app.append(h("p", null, "None. Your latest answer to every question was right."));
+  need.forEach(id => {
+    const m = QMAP[id];
+    app.append(h("div", { class: "card" },
+      h("div", { class: "tagline" }, "Unit " + m.u.n + " · " + tagName(m.q.tag)),
+      h("p", null, h("span", { class: "m-no" }, "✗ "), qtext(id)),
+      h("p", null, h("b", null, "Correct answer: "), h("span", { html: m.q.options[m.q.a] })),
+      h("p", { html: m.q.why }),
+      h("a", { href: "#/unit/" + m.u.id }, "Go to Unit " + m.u.n)));
+  });
+  app.append(h("h2", null, "Every question you have answered"));
+  app.append(h("div", { class: "tbl" }, h("table", null,
+    h("thead", null, h("tr", null, ["Latest", "Unit", "Concept", "Question", "Right", "Wrong", "Review box"].map(t => h("th", null, t)))),
+    h("tbody", null, list.map(id => {
+      const m = QMAP[id], x = qs[id], c = S.cards[id];
+      return h("tr", null,
+        h("td", null, h("span", { class: x.last ? "m-ok" : "m-no" }, x.last ? "✓" : "✗")),
+        h("td", null, String(m.u.n)), h("td", null, tagName(m.q.tag)),
+        h("td", null, qtext(id).slice(0, 110)),
+        h("td", null, String(x.r)), h("td", null, String(x.w)), h("td", null, c ? String(c.box) : "–"));
+    })))));
+  // concepts
+  const tags = {};
+  ans.forEach(e => { if (!QMAP[e.q]) return; const t = QMAP[e.q].q.tag; const x = tags[t] || (tags[t] = { n: 0, r: 0 }); x.n++; if (e.ok) x.r++; });
+  const tl = Object.keys(tags).sort((a, b) => (tags[a].r / tags[a].n) - (tags[b].r / tags[b].n) || tags[b].n - tags[a].n);
+  app.append(h("h2", null, "Concepts, weakest first"));
+  app.append(h("div", { class: "tbl" }, h("table", null,
+    h("thead", null, h("tr", null, ["Concept", "Right", "Answers", "Accuracy"].map(t => h("th", null, t)))),
+    h("tbody", null, tl.map(t => {
+      const x = tags[t], p = pct(x.r, x.n);
+      return h("tr", null, h("td", null, tagName(t)), h("td", null, String(x.r)), h("td", null, String(x.n)),
+        h("td", { style: "min-width:9rem" }, h("div", { class: "bar", role: "progressbar", "aria-valuemin": "0", "aria-valuemax": "100", "aria-valuenow": String(p), "aria-label": tagName(t) + " accuracy" }, h("i", { style: "width:" + p + "%" })), h("span", { class: "barlabel" }, p + "%")));
+    })))));
+}
+
+/* ===================== VIEW: glossary ===================== */
+function viewGlossary(app) {
+  app.append(h("h1", null, "Glossary"));
+  app.append(h("p", { class: "muted" }, "Every new word from the units, in plain language."));
+  const seen = {}, items = [];
+  UNITS.forEach(u => (u.terms || []).forEach(([t, d]) => {
+    const key = plain(t).toLowerCase(); if (seen[key]) return; seen[key] = 1;
+    items.push({ t, d, n: u.n, key });
+  }));
+  items.sort((a, b) => a.key.replace(/[^a-z0-9]/g, "").localeCompare(b.key.replace(/[^a-z0-9]/g, "")));
+  const list = h("dl", { class: "terms" });
+  const box = h("input", { type: "search", placeholder: "Search for a word", "aria-label": "Search the glossary" });
+  const draw = () => {
+    const q = box.value.trim().toLowerCase(); list.replaceChildren();
+    items.filter(i => !q || i.key.includes(q) || plain(i.d).toLowerCase().includes(q))
+      .forEach(i => list.append(h("dt", { html: i.t }), h("dd", { html: i.d + ' <span class="muted">(Unit ' + i.n + ")</span>" })));
+    if (!list.children.length) list.append(h("dd", null, "No match."));
+  };
+  box.addEventListener("input", draw);
+  app.append(box, list); draw();
+}
+
 /* ===================== VIEW: method ===================== */
 function viewMethod(app) {
   app.append(h("h1", null, "Why this dashboard works the way it does"));
@@ -745,13 +957,17 @@ function viewMethod(app) {
 /* ===================== VIEW: sources + setup ===================== */
 function viewSources(app) {
   app.append(h("h1", null, "Sources and setup"));
-  app.append(h("div", { class: "card" }, h("h2", null, "Set up Lean on your computer"),
+  app.append(h("div", { class: "card" }, h("h2", null, "Run Lean code: two ways"),
+    h("h3", null, "Way 1: in your browser, nothing to install (easiest)"),
+    h("p", null, "Open the ", link("Lean Playground", "https://live.lean-lang.org/"), ". Delete what is in the editor, paste or type your code, and the results appear next to it. It needs internet and it does not save your code, so copy anything you want to keep."),
+    h("h3", null, "Way 2: on your computer with VS Code (later, if you want)"),
     h("ol", null,
       h("li", null, "Install ", link("Visual Studio Code", "https://code.visualstudio.com/"), "."),
       h("li", null, "In VS Code open Extensions, search for ", h("code", null, "Lean 4"), " and install the one whose publisher is ", h("b", null, "leanprover"), " (id ", h("code", null, "leanprover.lean4"), "). Check the publisher name before you click Install. Page: ", link("marketplace listing", "https://marketplace.visualstudio.com/items?itemName=leanprover.lean4"), "."),
       h("li", null, "Follow the extension's own setup guide. It walks you through installing Lean itself."),
       h("li", null, "Keep Lean at version 4.32.2 or later (2026 kernel soundness fixes). The examples in this course were tested on Lean 4.36.0."),
-      h("li", null, "Check it works: make a file ending in ", h("code", null, ".lean"), ", type ", h("code", null, "#eval 2 + 3"), ", click on the line and look for ", h("code", null, "5"), " in the Infoview panel."))));
+      h("li", null, "Check it works: make a file ending in ", h("code", null, ".lean"), ", type ", h("code", null, "#eval 2 + 3"), ", click on the line and look for ", h("code", null, "5"), " in the Infoview panel.")),
+    h("p", { class: "muted" }, "Lean's own Learn page recommends the Natural Number Game for beginners. It is linked below.")));
   app.append(h("h2", null, "Sources used in the course"));
   app.append(h("ul", null, SOURCES.map(([t, u]) => h("li", null, link(t, u)))));
   app.append(h("h2", null, "Sources for the teaching method"));
@@ -765,17 +981,23 @@ function viewData(app) {
   app.append(h("p", { class: "muted" }, "Answer log: " + S.log.length + " of " + LOG_CAP + " entries kept (the oldest are dropped after that). Browser storage: " + (storageOK ? "working" : "BLOCKED, progress will not survive closing the page") + "."));
   const ta = h("textarea", { rows: "10", "aria-label": "Progress data", placeholder: "Press Export to fill this box, or paste saved progress here and press Import." });
   const msg = h("div", { class: "msg", role: "status" });
+  const fileMsg = h("div", { class: "msg", role: "status" });
+  const fileIn = h("input", { type: "file", accept: ".json,application/json", "aria-label": "Choose a backup file", onchange: ev => {
+    const f = ev.target.files && ev.target.files[0]; if (!f) return;
+    const rd = new FileReader();
+    rd.onload = () => { doImport(String(rd.result), fileMsg); };
+    rd.onerror = () => { fileMsg.textContent = "Could not read that file."; };
+    rd.readAsText(f);
+  } });
+  app.append(h("div", { class: "card" }, h("h2", null, "Backup file (recommended)"),
+    h("p", null, "Press the button to save a small file with all your progress. Keep it somewhere safe. If your progress is ever lost, load that file here to get it back. Do this about once a week."),
+    h("button", { onclick: () => { downloadBackup(); fileMsg.textContent = "✓ Backup file saved to your Downloads folder."; } }, "Save backup file"),
+    h("p", null, h("label", null, "Load a backup file: ", fileIn)), fileMsg,
+    h("p", { class: "muted", id: "persistNote" }, persistNote())));
+  app.append(h("h2", null, "Copy and paste instead"));
   app.append(ta, h("div", null,
-    h("button", { onclick: async () => { ta.value = JSON.stringify(S); msg.textContent = (await copyText(ta.value, ta)) ? "✓ Exported and copied. Save it somewhere safe (a note or file)." : "Exported. The text is in the box: select it all and copy it yourself."; } }, "Export (copy)"),
-    h("button", { class: "secondary", onclick: () => {
-      try {
-        if (!ta.value.trim()) throw new Error("Paste saved progress into the box first.");
-        const s = sanitize(JSON.parse(ta.value));
-        if (!confirm("Replace the progress in this browser with the pasted data? This cannot be undone.")) return;
-        const sk = s._skipped; delete s._skipped; S = s; save(); renderNav(); updateToday();
-        msg.textContent = "✓ Imported " + S.log.length + " log entries" + (sk ? " (" + sk + " damaged entries skipped)" : "") + ".";
-      } catch (e) { msg.textContent = "Import failed: " + (e instanceof SyntaxError ? "that is not valid progress text (it must be the exact text from Export)." : e.message); }
-    } }, "Import (replace)"),
+    h("button", { onclick: async () => { S.lastBackup = Date.now(); save(); ta.value = JSON.stringify(S); msg.textContent = (await copyText(ta.value, ta)) ? "✓ Exported and copied. Save it somewhere safe (a note or file)." : "Exported. The text is in the box: select it all and copy it yourself."; } }, "Export (copy)"),
+    h("button", { class: "secondary", onclick: () => { doImport(ta.value, msg); } }, "Import (replace)"),
     h("button", { class: "danger", onclick: () => {
       if (confirm("Delete ALL progress in this browser? Export first if you might want it back.")) { S = blank(); save(); renderNav(); updateToday(); ta.value = ""; msg.textContent = "Progress reset."; }
     } }, "Reset everything")), msg);
@@ -783,6 +1005,14 @@ function viewData(app) {
 
 /* ===================== start ===================== */
 load();
+try {   // ask the browser to keep this data (not clear it automatically)
+  if (navigator.storage && navigator.storage.persist) {
+    navigator.storage.persisted().then(p => p ? true : navigator.storage.persist()).then(p => { persisted = !!p; const e = document.getElementById("persistNote"); if (e) e.textContent = persistNote(); }).catch(() => {});
+  }
+} catch (e) { /* not available */ }
+if ("serviceWorker" in navigator && /^https?:$/.test(location.protocol)) {   // offline support, only when served over the web
+  navigator.serviceWorker.register("sw.js").catch(() => {});
+}
 route();
 </script>
 </body>

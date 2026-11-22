@@ -1,20 +1,28 @@
-"""Builds lean-dash.html: src/app.template.html with content.js inlined.
+"""Builds the dashboard.
 
+Writes index.html (the whole app in one file) and sw.js (offline support).
 Run from anywhere:  python3 build.py
 """
+import hashlib
 import pathlib
 import sys
 
 root = pathlib.Path(__file__).resolve().parent
 template = (root / "src" / "app.template.html").read_text(encoding="utf-8")
 content = (root / "content.js").read_text(encoding="utf-8")
+beginner = (root / "content-beginner.js").read_text(encoding="utf-8")
 
 marker = "/*__CONTENT__*/"
 if template.count(marker) != 1:
     sys.exit("Template must contain the marker exactly once: " + marker)
-if "</script" in content.lower():
-    sys.exit("content.js contains '</script', which would break the page.")
+combined = content + "\n" + beginner
+if "</script" in combined.lower():
+    sys.exit("The content files contain '</script', which would break the page.")
 
-out = root / "lean-dash.html"
-out.write_text(template.replace(marker, content), encoding="utf-8")
-print("Wrote", out, out.stat().st_size, "bytes")
+html = template.replace(marker, combined)
+(root / "index.html").write_text(html, encoding="utf-8")
+
+version = hashlib.sha256(html.encode("utf-8")).hexdigest()[:10]
+sw = (root / "src" / "sw.template.js").read_text(encoding="utf-8").replace("__VERSION__", version)
+(root / "sw.js").write_text(sw, encoding="utf-8")
+print("Wrote index.html (%d bytes) and sw.js (version %s)" % (len(html.encode("utf-8")), version))

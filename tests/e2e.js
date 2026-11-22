@@ -14,11 +14,16 @@ const check = (name, cond, extra) => { results.push([cond ? 'PASS' : 'FAIL', nam
   page.on('pageerror', e => errors.push('pageerror: ' + e.message));
   page.on('dialog', d => d.accept());
   await page.goto('file://' + path);
+  check('new user lands on Start here', (await page.locator('h1').innerText()) === 'Start here');
+  const startTxt = await page.locator('main').innerText();
+  check('start page: has install, backup, playground and Natural Number Game guidance', /Install/.test(startTxt) && /Save backup file/.test(startTxt) && /Lean Playground/.test(startTxt) && /Natural Number Game/.test(startTxt));
+  await page.goto('file://' + path + '#/map'); await page.reload();
 
   // ---- course map
-  check('9 unit blocks', (await page.locator('.chain li').count()) === 9);
-  check('unit 1 open, others locked', (await page.locator('a.block.open').count()) === 1 && (await page.locator('.block.locked').count()) === 8);
-  check('plan line mentions Unit 1', (await page.locator('main').innerText()).includes('Unit 1: Lean as a calculator'));
+  check('10 unit blocks (Unit 0 to 9)', (await page.locator('.chain li').count()) === 10);
+  check('unit 0 open, others locked', (await page.locator('a.block.open').count()) === 1 && (await page.locator('.block.locked').count()) === 9);
+  check('plan line mentions Unit 0', (await page.locator('main').innerText()).includes('Unit 0: Start here: the basic ideas'));
+  check('first-timer banner shown', (await page.locator('main').innerText()).includes('New here?'));
   await page.screenshot({ path: shots + '/map.png' });
 
   // locked unit via URL falls back to map
@@ -46,6 +51,30 @@ const check = (name, cond, extra) => { results.push([cond ? 'PASS' : 'FAIL', nam
     await submit.click();
     return info;
   }
+
+  // ---- unit 0 walk-through (no code) + step help on every step
+  await page.locator('a.block.open').click();
+  await page.waitForFunction(() => document.querySelector('h1').textContent.startsWith('Unit 0'), null, { timeout: 5000 }).catch(() => {});
+  check('unit 0 heading', (await page.locator('h1').innerText()).startsWith('Unit 0'));
+  check('goals step: Words to know shown', (await page.locator('dl.terms dt').count()) >= 8);
+  for (const [label, key] of [['1 Goals','Goals'],['2 Explain','Explain'],['3 Worked','Worked'],['4 Solidity','Bridge'],['5 Fill','Fill'],['6 Mastery','Quiz'],['7 Practice','Practice']]) {
+    await page.getByRole('button', { name: new RegExp('^' + label) }).click();
+    const tip = await page.locator('.tipbox').first().innerText();
+    check('step help present: ' + key, /^What to do:/.test(tip), tip.slice(0, 40));
+  }
+  await page.getByRole('button', { name: /^7 Practice/ }).click();
+  check('practice links to the Lean Playground', (await page.locator('a[href="https://live.lean-lang.org/"]').count()) >= 1);
+  await page.getByRole('button', { name: /^2 Explain/ }).click();
+  check('explain step has an In short summary', (await page.locator('.summary').count()) === 1);
+  await page.getByRole('button', { name: /^6 Mastery quiz/ }).click();
+  await page.getByRole('button', { name: 'Start quiz' }).click();
+  for (let k = 0; k < 5; k++) {
+    await answerCurrent('u0', true, 'sure');
+    await page.getByRole('button', { name: k === 4 ? 'See result' : 'Next question' }).click();
+  }
+  check('unit 0 mastered', (await page.locator('h2', { hasText: 'Unit mastered' }).count()) === 1);
+  check('result shows a mark for every question', (await page.locator('ul.marks li').count()) === 5 && (await page.locator('ul.marks .m-ok').count()) === 5);
+  await page.goto('file://' + path + '#/map');
 
   // ---- unit 1 walk-through
   await page.locator('a.block.open').click();
@@ -83,16 +112,18 @@ const check = (name, cond, extra) => { results.push([cond ? 'PASS' : 'FAIL', nam
   check('unit 2 unlocked msg', (await page.locator('main').innerText()).includes('Unit 2 is now unlocked'));
   const st1 = await page.evaluate(() => S.units.u1);
   check('state: u1 mastered best 100', st1.mastered && st1.best === 100 && st1.attempts === 1, JSON.stringify(st1));
-  check('cards created for 5 questions', (await page.evaluate(() => Object.keys(S.cards).length)) === 5);
+  check('cards created for 10 questions (unit 0 + unit 1)', (await page.evaluate(() => Object.keys(S.cards).length)) === 10);
   await page.screenshot({ path: shots + '/result.png' });
   await page.getByRole('button', { name: 'Do the practice task' }).click();
   await page.locator('summary', { hasText: 'Show expected result' }).click();
   check('practice expected shown', (await page.locator('pre.out').innerText()).includes('1000000000'));
   await page.locator('#pdone').check();
 
+  // 10 perfect answers would switch the dashboard to Challenge mode (a 6th question). Simulate a few earlier misses so this section runs in Steady mode.
+  await page.evaluate(() => { for (let i = 0; i < 5; i++) S.log.push({ t: Date.now() - 1000, u: 'u1', q: 'u1q1', kind: 'quiz', ok: false, conf: 'unsure', ms: 2000 }); save(); });
   // ---- unit 2: fail path, correctives, retake shuffled
   await page.goto('file://' + path + '#/map');
-  check('map: u1 mastered, u2 open', (await page.locator('a.block.mastered').count()) === 1 && (await page.locator('a.block.open').count()) === 1);
+  check('map: u0 and u1 mastered, u2 open', (await page.locator('a.block.mastered').count()) === 2 && (await page.locator('a.block.open').count()) === 1);
   await page.locator('a.block.open').click();
   await page.getByRole('button', { name: /^6 Mastery quiz/ }).click();
   await page.getByRole('button', { name: 'Start quiz' }).click();
@@ -104,7 +135,7 @@ const check = (name, cond, extra) => { results.push([cond ? 'PASS' : 'FAIL', nam
   check('first attempt is original order', order1.join() === 'u2q1,u2q2,u2q3,u2q4,u2q5', order1.join());
   check('fail: not there yet + correctives', (await page.locator('h2', { hasText: 'Not there yet' }).count()) === 1 && (await page.locator('h3', { hasText: 'Correctives' }).count()) === 1);
   check('3 missed correctives shown', (await page.locator('.card .card').count()) === 3, String(await page.locator('.card .card').count()));
-  check('u2 not mastered, u3 still locked', await page.evaluate(() => !isMastered(UMAP.u2) && unitStatus(2) === 'locked'));
+  check('u2 not mastered, u3 still locked', await page.evaluate(() => !isMastered(UMAP.u2) && unitStatus(UNITS.indexOf(UMAP.u3)) === 'locked'));
   const sw = await page.evaluate(() => S.log.filter(e => e.kind === 'quiz' && e.conf === 'sure' && !e.ok).length);
   check('confident-wrong logged (3 from u2)', sw === 3, String(sw));
   await page.getByRole('button', { name: 'Back to the worked example' }).click();
@@ -227,7 +258,7 @@ const check = (name, cond, extra) => { results.push([cond ? 'PASS' : 'FAIL', nam
   check('report: no HTML tags leaked', !/<code>|&lt;/.test(rep));
   await page.getByRole('button', { name: 'Copy report' }).click();
   await page.waitForTimeout(500);
-  const msg = await page.locator('.msg').innerText();
+  const msg = await page.locator('.msg').last().innerText();
   check('copy gives a message', msg.length > 5, msg);
   const clip = await page.evaluate(() => navigator.clipboard.readText().catch(() => null));
   if (clip !== null) check('clipboard has the report', clip.includes('=== LEAN-DASH WEEKLY REPORT (v1) ==='));
@@ -247,17 +278,17 @@ const check = (name, cond, extra) => { results.push([cond ? 'PASS' : 'FAIL', nam
   await page.goto('file://' + path + '#/data');
   await page.locator('textarea').fill(exported);
   await page.getByRole('button', { name: /Import/ }).click();
-  check('import restores', (await page.evaluate(() => S.log.length)) > 0 && (await page.locator('.msg').innerText()).startsWith('✓ Imported'), await page.locator('.msg').innerText());
+  check('import restores', (await page.evaluate(() => S.log.length)) > 0 && (await page.locator('.msg').last().innerText()).startsWith('✓ Imported'), await page.locator('.msg').last().innerText());
   await page.locator('textarea').fill('{not json');
   await page.getByRole('button', { name: /Import/ }).click();
-  check('bad JSON rejected politely', (await page.locator('.msg').innerText()).startsWith('Import failed'));
+  check('bad JSON rejected politely', (await page.locator('.msg').last().innerText()).startsWith('Import failed'));
   await page.locator('textarea').fill('{"v":1,"log":[{"q":"zzz","u":"u1","kind":"quiz","ok":true,"t":1},{"evil":1}],"units":{"u1":{"best":9999,"mastered":"yes"}},"notes":"<img src=x onerror=alert(1)>"}');
   await page.getByRole('button', { name: /Import/ }).click();
   const hostile = await page.evaluate(() => ({ log: S.log.length, best: S.units.u1 && S.units.u1.best, m: S.units.u1 && S.units.u1.mastered }));
   check('hostile import sanitized', hostile.log === 0 && hostile.best === 100 && hostile.m === false, JSON.stringify(hostile));
   await page.locator('textarea').fill('{"v":2}');
   await page.getByRole('button', { name: /Import/ }).click();
-  check('wrong version rejected', (await page.locator('.msg').innerText()).includes('version 1'));
+  check('wrong version rejected', (await page.locator('.msg').last().innerText()).includes('version 1'));
   // cap
   const capped = await page.evaluate(() => { for (let i = 0; i < 1700; i++) S.log.push({ t: Date.now(), u: 'u1', q: 'u1q1', kind: 'quiz', ok: true, conf: null, ms: 1 }); save(); return JSON.parse(localStorage.getItem(KEY)).log.length; });
   check('log capped at 1500', capped === 1500, String(capped));
@@ -293,10 +324,11 @@ const check = (name, cond, extra) => { results.push([cond ? 'PASS' : 'FAIL', nam
   const mobile = await browser.newContext({ viewport: { width: 375, height: 800 }, deviceScaleFactor: 2 });
   const mp = await mobile.newPage(); mp.on('pageerror', e => errors.push('mobile pageerror: ' + e.message));
   await mp.goto('file://' + path + '#/map');
+  await mp.reload();
   const overflow = await mp.evaluate(() => document.documentElement.scrollWidth > window.innerWidth);
   check('mobile: no horizontal page scroll on map', !overflow);
   await mp.screenshot({ path: shots + '/mobile-map.png' });
-  await mp.goto('file://' + path + '#/unit/u1'); await mp.reload();
+  await mp.goto('file://' + path + '#/unit/u0'); await mp.reload();
   await mp.getByRole('button', { name: /^3 Worked example/ }).click();
   check('mobile: no horizontal page scroll on worked example', !(await mp.evaluate(() => document.documentElement.scrollWidth > window.innerWidth)));
   await mp.screenshot({ path: shots + '/mobile-unit.png' });
