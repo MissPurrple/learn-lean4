@@ -1,0 +1,789 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lean Blockchain Dash</title>
+<style>
+:root{
+  --bg:#f7f7f4; --fg:#1b2230; --muted:#566074; --card:#ffffff; --line:#d6dae3;
+  --accent:#2f4fd0; --accent-fg:#ffffff; --accent-soft:#e8edff;
+  --good:#1f7a36; --good-bg:#e4f4e9; --bad:#b42323; --bad-bg:#fcebeb;
+  --warn:#8a5200; --warn-bg:#fff3d6; --code-bg:#eef0f5; --lock:#8b93a4;
+}
+@media (prefers-color-scheme: dark){
+  :root{
+    --bg:#12151c; --fg:#e7eaf1; --muted:#a2aabb; --card:#1b2029; --line:#323a4a;
+    --accent:#8ea6ff; --accent-fg:#0d1220; --accent-soft:#232c4a;
+    --good:#6fd08a; --good-bg:#17301f; --bad:#ff8f8f; --bad-bg:#3a1b1b;
+    --warn:#ffcb70; --warn-bg:#3a2d10; --code-bg:#141922; --lock:#7a8397;
+  }
+}
+*{box-sizing:border-box}
+html{font-size:17px}
+body{margin:0;background:var(--bg);color:var(--fg);font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;line-height:1.55}
+a{color:var(--accent)}
+.skip{position:absolute;left:-999px;top:0;background:var(--accent);color:var(--accent-fg);padding:.5rem 1rem;z-index:10}
+.skip:focus{left:0}
+header.top{background:var(--card);border-bottom:1px solid var(--line);position:sticky;top:0;z-index:5}
+.top-in{max-width:62rem;margin:0 auto;padding:.5rem 16px;display:flex;flex-wrap:wrap;gap:.5rem 1rem;align-items:center;justify-content:space-between}
+.brand{font-weight:700;letter-spacing:.01em}
+nav{display:flex;flex-wrap:wrap;gap:.25rem}
+nav a{padding:.35rem .7rem;border-radius:.5rem;text-decoration:none;color:var(--fg);border:1px solid transparent;font-size:.95rem}
+nav a:hover{background:var(--accent-soft)}
+nav a[aria-current="page"]{background:var(--accent-soft);border-color:var(--accent);font-weight:600}
+.pill{display:inline-block;min-width:1.4rem;padding:0 .4rem;margin-left:.3rem;border-radius:1rem;background:var(--warn-bg);color:var(--warn);font-size:.8rem;text-align:center;border:1px solid var(--warn)}
+main:focus{outline:none}
+main{max-width:62rem;margin:0 auto;padding:1rem 16px 4rem}
+h1{font-size:1.6rem;margin:.5rem 0 .75rem;line-height:1.25}
+h2{font-size:1.25rem;margin:1.5rem 0 .5rem}
+h3{font-size:1.05rem;margin:1rem 0 .4rem}
+.muted{color:var(--muted)}
+.card{background:var(--card);border:1px solid var(--line);border-radius:.8rem;padding:1rem 1.1rem;margin:.9rem 0}
+.banner{border-left:5px solid var(--accent);background:var(--accent-soft);padding:.7rem 1rem;border-radius:.5rem;margin:.8rem 0}
+.banner.support{border-color:var(--warn);background:var(--warn-bg)}
+.banner.challenge{border-color:var(--good);background:var(--good-bg)}
+code{background:var(--code-bg);padding:.05rem .3rem;border-radius:.3rem;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:.92em}
+pre{background:var(--code-bg);padding:.75rem .9rem;border-radius:.5rem;overflow-x:auto;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:.9rem;line-height:1.45;margin:.5rem 0;white-space:pre}
+pre.out{border-left:4px solid var(--good)}
+.label-small{font-size:.8rem;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);margin:.7rem 0 .1rem;font-weight:600}
+button,.btn{font:inherit;cursor:pointer;border-radius:.5rem;border:1px solid var(--accent);background:var(--accent);color:var(--accent-fg);padding:.5rem 1rem;margin:.25rem .4rem .25rem 0;text-decoration:none;display:inline-block}
+button.secondary{background:transparent;color:var(--accent)}
+button.danger{background:transparent;color:var(--bad);border-color:var(--bad)}
+button:disabled{opacity:.45;cursor:not-allowed}
+button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,summary:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+textarea{width:100%;font:inherit;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:.88rem;background:var(--card);color:var(--fg);border:1px solid var(--line);border-radius:.5rem;padding:.6rem}
+/* course map */
+.chain{display:flex;flex-wrap:wrap;gap:.8rem 0;align-items:stretch;list-style:none;padding:0;margin:1rem 0}
+.chain li{display:flex;align-items:center}
+.chain li+li::before{content:"→";color:var(--muted);padding:0 .45rem;font-size:1.2rem}
+.block{width:11.5rem;min-height:9.2rem;display:flex;flex-direction:column;border:2px solid var(--line);border-radius:.8rem;padding:.7rem;background:var(--card);text-decoration:none;color:var(--fg)}
+.block .n{font-size:.8rem;color:var(--muted);font-weight:600}
+.block .t{font-weight:600;margin:.1rem 0 .4rem;flex:1;font-size:.95rem;line-height:1.3}
+.block .st{font-size:.8rem;font-weight:700;margin-bottom:.35rem}
+.block.open{border-color:var(--accent)}
+.block.open .st{color:var(--accent)}
+.block.mastered{border-color:var(--good);background:var(--good-bg)}
+.block.mastered .st{color:var(--good)}
+.block.locked{border-style:dashed;color:var(--lock);cursor:not-allowed;background:transparent}
+.block.locked .st{color:var(--lock)}
+a.block:hover{box-shadow:0 2px 8px rgba(0,0,0,.18)}
+.bar{position:relative;height:.7rem;background:var(--code-bg);border-radius:.4rem;overflow:hidden;border:1px solid var(--line)}
+.bar>i{display:block;height:100%;background:var(--accent)}
+.block.mastered .bar>i{background:var(--good)}
+.bar>b{position:absolute;left:80%;top:0;bottom:0;width:2px;background:var(--fg);opacity:.55}
+.barlabel{font-size:.75rem;color:var(--muted);margin-top:.15rem}
+/* unit */
+.stepper{display:flex;flex-wrap:wrap;gap:.3rem;margin:.6rem 0}
+.stepper button{margin:0;background:transparent;color:var(--fg);border-color:var(--line);font-size:.88rem;padding:.3rem .65rem}
+.stepper button[aria-current="step"]{background:var(--accent);color:var(--accent-fg);border-color:var(--accent)}
+.explain p,.explain li{max-width:46rem}
+.opt{display:block;border:1px solid var(--line);border-radius:.5rem;padding:.5rem .75rem;margin:.4rem 0;cursor:pointer;background:var(--card)}
+.opt:hover{background:var(--accent-soft)}
+.opt input{margin-right:.55rem}
+.opt.correct{border-color:var(--good);background:var(--good-bg);cursor:default}
+.opt.wrong{border-color:var(--bad);background:var(--bad-bg);cursor:default}
+.opt .mark{font-weight:700;margin-left:.5rem;font-size:.85rem}
+.conf{display:flex;flex-wrap:wrap;gap:.4rem;margin:.4rem 0}
+.conf label{border:1px solid var(--line);border-radius:2rem;padding:.3rem .9rem;cursor:pointer;background:var(--card)}
+.conf label:has(input:checked){border-color:var(--accent);background:var(--accent-soft);font-weight:600}
+fieldset{border:0;padding:0;margin:0}
+legend{padding:0;font-weight:600;margin-bottom:.4rem}
+.fb{border-radius:.5rem;padding:.7rem .9rem;margin:.7rem 0}
+.fb.ok{background:var(--good-bg);border-left:5px solid var(--good)}
+.fb.no{background:var(--bad-bg);border-left:5px solid var(--bad)}
+.fb.sure-wrong{outline:2px dashed var(--warn)}
+.tagline{font-size:.8rem;color:var(--muted)}
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(15rem,1fr));gap:.8rem}
+.stat{background:var(--card);border:1px solid var(--line);border-radius:.6rem;padding:.6rem .8rem}
+.stat b{display:block;font-size:1.4rem}
+table{border-collapse:collapse;width:100%;font-size:.92rem}
+th,td{border-bottom:1px solid var(--line);padding:.35rem .5rem;text-align:left}
+details{margin:.5rem 0}
+summary{cursor:pointer;font-weight:600}
+.msg{min-height:1.4rem;font-weight:600}
+.warn{background:var(--warn-bg);border:1px solid var(--warn);color:var(--fg);padding:.5rem .8rem;border-radius:.5rem;margin:.6rem 0}
+@media (max-width:560px){ .block{width:100%} .chain li{width:100%} .chain li+li::before{content:"↓"; padding:0 .45rem;} .chain{flex-direction:column} .chain li{flex-direction:column;align-items:stretch} }
+@media print{ header.top,.stepper,button{display:none} }
+</style>
+</head>
+<body>
+<a class="skip" href="#app">Skip to content</a>
+<header class="top"><div class="top-in">
+  <span class="brand">Lean &middot; Blockchain Dash</span>
+  <nav id="nav" aria-label="Main"></nav>
+  <span class="muted" id="today" aria-live="off"></span>
+</div></header>
+<main id="app" tabindex="-1"></main>
+<noscript><p style="padding:1rem">This page needs JavaScript to run.</p></noscript>
+
+<script>
+/*__CONTENT__*/
+</script>
+<script>
+"use strict";
+/* ===================== constants ===================== */
+const KEY = "leandash.v1";
+const DAY = 86400000;
+const BOXES = [1, 3, 7, 14, 30];          // Leitner box intervals in days
+const PASS_PCT = 80;                       // mastery gate
+const PACE = { window: 20, supportBelowPct: 60, supportMinAnswers: 5, challengeAtPct: 85, challengeMinAnswers: 10 };
+const IDLE_MS = 120000;                    // 2 minutes without interaction = idle
+const LOG_CAP = 1500;
+const SLOW_MS = 60000;
+const REVIEW_BATCH = 20;
+const CONF_LABEL = { sure: "Sure", unsure: "Unsure", guess: "Guessing" };
+
+/* ===================== content lookup ===================== */
+const UMAP = {}, QMAP = {};
+UNITS.forEach(u => {
+  UMAP[u.id] = u;
+  u.quiz.forEach(q => { QMAP[q.id] = { q, u }; });
+  QMAP[u.challenge.id] = { q: u.challenge, u };
+});
+
+/* ===================== small helpers ===================== */
+function h(tag, props, ...kids) {
+  const e = document.createElement(tag);
+  if (props) for (const k in props) {
+    const v = props[k];
+    if (v === null || v === undefined || v === false) continue;
+    if (k === "class") e.className = v;
+    else if (k === "html") e.innerHTML = v;
+    else if (k === "value") e.value = v;
+    else if (k.startsWith("on")) e.addEventListener(k.slice(2), v);
+    else e.setAttribute(k, v === true ? "" : v);
+  }
+  for (const c of kids.flat(Infinity)) {
+    if (c === null || c === undefined || c === false) continue;
+    e.append(c.nodeType ? c : document.createTextNode(String(c)));
+  }
+  return e;
+}
+function plain(html) { return (new DOMParser().parseFromString(html, "text/html").body.textContent || "").replace(/\s+/g, " ").trim(); }
+function shuffle(a) { a = a.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
+function pad(n) { return String(n).padStart(2, "0"); }
+function dayKey(ts) { const d = new Date(ts); return d.getFullYear() + "-" + pad(d.getMonth() + 1) + "-" + pad(d.getDate()); }
+function startOfDay(ts) { const d = new Date(ts); d.setHours(0, 0, 0, 0); return d.getTime(); }
+function addDays(ts, k) { const d = new Date(startOfDay(ts)); d.setDate(d.getDate() + k); return d.getTime(); }
+function pct(a, b) { return b ? Math.round(100 * a / b) : 0; }
+function tagName(t) { return t.replace(/-/g, " "); }
+function link(text, href) { return h("a", { href, target: "_blank", rel: "noopener noreferrer" }, text); }
+
+/* ===================== state + storage ===================== */
+function blank() { return { v: 1, created: Date.now(), log: [], units: {}, cards: {}, secs: {}, faded: {}, notes: "" }; }
+let S = blank();
+let storageOK = true;
+let skippedOnLoad = 0;
+
+function num(x) { return typeof x === "number" && isFinite(x) ? x : null; }
+
+/* Validates untrusted data (localStorage or pasted import). Returns a clean state object. */
+function sanitize(o) {
+  if (!o || typeof o !== "object" || o.v !== 1) throw new Error("This is not Lean-Dash progress data (expected version 1).");
+  const s = blank(); let skipped = 0;
+  s.created = num(o.created) || Date.now();
+  const confs = [null, "sure", "unsure", "guess"], kinds = ["quiz", "review", "faded"];
+  if (Array.isArray(o.log)) for (const e of o.log) {
+    if (!e || typeof e !== "object" || !kinds.includes(e.kind) || !confs.includes(e.conf === undefined ? null : e.conf) ||
+        num(e.t) === null || typeof e.ok !== "boolean" || typeof e.u !== "string" || !UMAP[e.u] || typeof e.q !== "string") { skipped++; continue; }
+    if (e.kind !== "faded" && !QMAP[e.q]) { skipped++; continue; }
+    const ent = { t: e.t, u: e.u, q: e.q, kind: e.kind, ok: e.ok, conf: e.conf || null, ms: num(e.ms) === null ? null : Math.max(0, Math.min(e.ms, 600000)) };
+    if (e.kind === "faded") ent.first = e.first === true;
+    s.log.push(ent);
+  }
+  s.log = s.log.slice(-LOG_CAP);
+  if (o.units && typeof o.units === "object") for (const id of Object.keys(UMAP)) {
+    const x = o.units[id]; if (!x || typeof x !== "object") continue;
+    s.units[id] = { best: Math.max(0, Math.min(100, num(x.best) || 0)), mastered: x.mastered === true, attempts: Math.max(0, Math.floor(num(x.attempts) || 0)), practice: x.practice === true };
+  }
+  if (o.cards && typeof o.cards === "object") for (const id of Object.keys(QMAP)) {
+    const c = o.cards[id]; if (!c || typeof c !== "object") continue;
+    const box = Math.floor(num(c.box) || 0), due = num(c.due);
+    if (box >= 1 && box <= 5 && due !== null) s.cards[id] = { box, due };
+  }
+  if (o.secs && typeof o.secs === "object") for (const k of Object.keys(o.secs)) {
+    if (/^\d{4}-\d{2}-\d{2}$/.test(k) && num(o.secs[k]) !== null && o.secs[k] >= 0) s.secs[k] = o.secs[k];
+  }
+  if (o.faded && typeof o.faded === "object") for (const id of Object.keys(UMAP)) {
+    const f = o.faded[id]; if (!f || typeof f !== "object") continue;
+    s.faded[id] = { first: f.first === true ? true : f.first === false ? false : null, tries: Math.max(0, Math.floor(num(f.tries) || 0)) };
+  }
+  s.notes = typeof o.notes === "string" ? o.notes.slice(0, 5000) : "";
+  s._skipped = skipped;
+  return s;
+}
+function load() {
+  try {
+    const raw = localStorage.getItem(KEY);
+    if (raw) { S = sanitize(JSON.parse(raw)); skippedOnLoad = S._skipped || 0; delete S._skipped; }
+  } catch (e) { /* unreadable or blocked: start fresh, page still works */ if (e && e.name !== "SyntaxError" && !/Lean-Dash/.test(e.message || "")) storageOK = false; }
+}
+let lastSave = 0;
+function save() {
+  S.log = S.log.slice(-LOG_CAP);
+  try { localStorage.setItem(KEY, JSON.stringify(S)); lastSave = Date.now(); }
+  catch (e) { storageOK = false; }
+}
+function unitState(id) { return S.units[id] || (S.units[id] = { best: 0, mastered: false, attempts: 0, practice: false }); }
+function isMastered(u) { return !!(S.units[u.id] && S.units[u.id].mastered); }
+function unitStatus(i) {
+  if (isMastered(UNITS[i])) return "mastered";
+  if (i === 0 || isMastered(UNITS[i - 1])) return "open";
+  return "locked";
+}
+
+/* ===================== spaced review (Leitner) ===================== */
+function recordCard(qid, ok, isReview) {
+  const now = Date.now(); const c = S.cards[qid];
+  if (!c) { S.cards[qid] = { box: 1, due: addDays(now, BOXES[0]) }; return; }
+  if (!ok) { c.box = 1; c.due = addDays(now, BOXES[0]); return; }
+  if (isReview) { c.box = Math.min(5, c.box + 1); c.due = addDays(now, BOXES[c.box - 1]); }
+}
+function dueIds() { const now = Date.now(); return Object.keys(S.cards).filter(id => S.cards[id].due <= now); }
+function boxCounts() { const b = [0, 0, 0, 0, 0]; Object.values(S.cards).forEach(c => { b[c.box - 1]++; }); return b; }
+
+/* ===================== adaptive pace ===================== */
+function paceInfo() {
+  const a = S.log.filter(e => e.kind !== "faded").slice(-PACE.window);
+  const n = a.length, right = a.filter(e => e.ok).length;
+  let mode = "steady";
+  if (n >= PACE.supportMinAnswers && right * 100 < PACE.supportBelowPct * n) mode = "support";
+  else if (n >= PACE.challengeMinAnswers && right * 100 >= PACE.challengeAtPct * n) mode = "challenge";
+  return { mode, n, right, acc: n ? Math.round(100 * right / n) : null };
+}
+const PACE_TEXT = {
+  steady: "Steady: normal steps and the normal quiz.",
+  support: "Support: smaller steps (explanations appear one idea at a time) and key ideas are shown as hints on every question.",
+  challenge: "Challenge: each unit quiz also includes its extra challenge question."
+};
+function planLine() {
+  const due = dueIds().length;
+  const nextIdx = UNITS.findIndex((u, i) => unitStatus(i) === "open");
+  const parts = [];
+  if (due) parts.push("Do your " + due + " due review card" + (due === 1 ? "" : "s") + " first.");
+  else parts.push("No reviews are due.");
+  if (nextIdx >= 0) parts.push("Then study Unit " + UNITS[nextIdx].n + ": " + UNITS[nextIdx].title + ".");
+  else parts.push("All units are mastered. Keep your reviews going.");
+  return parts.join(" ");
+}
+
+/* ===================== active-time tracking ===================== */
+let lastAct = Date.now(), lastTick = Date.now();
+["click", "keydown", "scroll", "touchstart", "mousemove", "wheel"].forEach(ev =>
+  addEventListener(ev, () => { lastAct = Date.now(); }, { passive: true, capture: true }));
+setInterval(() => {
+  const now = Date.now(); const dt = Math.min(now - lastTick, 10000); lastTick = now;
+  if (document.visibilityState === "visible" && now - lastAct <= IDLE_MS) {
+    const k = dayKey(now); S.secs[k] = (S.secs[k] || 0) + dt / 1000;
+    if (now - lastSave > 15000) save();
+    updateToday();
+  }
+}, 5000);
+document.addEventListener("visibilitychange", () => { lastTick = Date.now(); if (document.visibilityState === "hidden") save(); });
+addEventListener("pagehide", save);
+function updateToday() {
+  const m = Math.floor((S.secs[dayKey(Date.now())] || 0) / 60);
+  const e = document.getElementById("today"); if (e) e.textContent = "Today: " + m + " min active";
+}
+
+/* ===================== layout / routing ===================== */
+const NAV = [["map", "Course map"], ["review", "Review"], ["report", "Weekly report"], ["method", "Method"], ["sources", "Sources & setup"], ["data", "Save / restore"]];
+let currentRoute = "map";
+function renderNav() {
+  const nav = document.getElementById("nav"); nav.replaceChildren();
+  const due = dueIds().length;
+  const active = currentRoute === "unit" ? "map" : currentRoute;
+  NAV.forEach(([r, label]) => {
+    const a = h("a", { href: "#/" + r }, label);
+    if (r === "review" && due) a.append(h("span", { class: "pill", title: due + " cards due" }, String(due)));
+    if (r === active) a.setAttribute("aria-current", "page");
+    nav.append(a);
+  });
+}
+const ui = { unit: null };
+function route() {
+  const parts = location.hash.replace(/^#\/?/, "").split("/");
+  let r = parts[0] || "map";
+  if (r === "unit" && !(UMAP[parts[1]] && unitStatus(UNITS.indexOf(UMAP[parts[1]])) !== "locked")) { r = "map"; }
+  if (!["map", "unit", "review", "report", "method", "sources", "data"].includes(r)) r = "map";
+  const wanted = r === "unit" ? "#/unit/" + parts[1] : "#/" + r;
+  if (location.hash !== wanted) { history.replaceState(null, "", wanted); }   // fix the address bar if we redirected
+  currentRoute = r;
+  renderNav(); updateToday();
+  const app = document.getElementById("app"); app.replaceChildren();
+  try {
+    if (r === "map") viewMap(app);
+    else if (r === "unit") viewUnit(app, UMAP[parts[1]], true);
+    else if (r === "review") viewReview(app);
+    else if (r === "report") viewReport(app);
+    else if (r === "method") viewMethod(app);
+    else if (r === "sources") viewSources(app);
+    else if (r === "data") viewData(app);
+  } catch (err) {
+    app.replaceChildren(h("div", { class: "warn" }, "Something went wrong drawing this page: " + err.message + ". Try the Course map link."));
+    console.error(err);
+  }
+  window.scrollTo(0, 0);
+  app.focus({ preventScroll: true });
+}
+addEventListener("hashchange", route);
+
+/* ===================== VIEW: course map ===================== */
+function paceBanner() {
+  const p = paceInfo();
+  return h("div", { class: "banner " + (p.mode === "steady" ? "" : p.mode) },
+    h("b", null, "Pace: " + p.mode),
+    p.acc === null ? " (no answers yet). " : " (" + p.right + "/" + p.n + " correct in your last " + p.n + " answer" + (p.n === 1 ? "" : "s") + ", " + p.acc + "%). ",
+    PACE_TEXT[p.mode]);
+}
+function viewMap(app) {
+  app.append(h("h1", null, "Lean 4 for blockchain"));
+  app.append(h("p", { class: "muted" }, "First-year university level. Ethereum (Solidity, the EVM) and Solana (Rust) are used as the running examples."));
+  if (!storageOK) app.append(h("div", { class: "warn" }, "Your browser is blocking saved progress for this page, so nothing will be remembered after you close it. Use Save / restore to copy your progress out as text."));
+  if (skippedOnLoad) app.append(h("div", { class: "warn" }, skippedOnLoad + " damaged progress entries were skipped when loading."));
+  app.append(h("div", { class: "card" }, h("b", null, "Today's plan: "), planLine()));
+  app.append(paceBanner());
+  const ol = h("ol", { class: "chain", "aria-label": "Units" });
+  UNITS.forEach((u, i) => {
+    const st = unitStatus(i), best = (S.units[u.id] && S.units[u.id].best) || 0;
+    const label = st === "mastered" ? "✓ Mastered" : st === "open" ? "Open" : "🔒 Locked";
+    const inner = [
+      h("span", { class: "n" }, "Unit " + u.n),
+      h("span", { class: "t" }, u.title),
+      h("span", { class: "st" }, label),
+      h("div", { class: "bar", role: "progressbar", "aria-valuemin": "0", "aria-valuemax": "100", "aria-valuenow": String(best), "aria-label": "Best quiz score" }, h("i", { style: "width:" + best + "%" }), h("b", { title: "80% needed" })),
+      h("span", { class: "barlabel" }, "Best: " + best + "% (need " + PASS_PCT + "%)")
+    ];
+    const li = h("li", null, st === "locked"
+      ? h("div", { class: "block locked", "aria-disabled": "true", title: "Master Unit " + (u.n - 1) + " to unlock" }, inner)
+      : h("a", { class: "block " + st, href: "#/unit/" + u.id }, inner));
+    ol.append(li);
+  });
+  app.append(ol);
+  app.append(h("details", { class: "card" }, h("summary", null, "How this dashboard works"),
+    h("ul", null,
+      h("li", null, "Work through a unit in order: goals, explanation, worked example, bridge to Solidity/Rust, fill-the-blank, quiz, practice in VS Code."),
+      h("li", null, "Score " + PASS_PCT + "% or more on a unit quiz to master it and unlock the next unit. Below that you get correctives, then a retake in a new order."),
+      h("li", null, "Every question you answer becomes a review card. Wrong answers go back to box 1. Boxes repeat after " + BOXES.join(", ") + " days."),
+      h("li", null, "The pace mode looks at your last " + PACE.window + " answers. Support is below " + PACE.supportBelowPct + "% (after at least " + PACE.supportMinAnswers + " answers). Challenge is " + PACE.challengeAtPct + "% or more (after at least " + PACE.challengeMinAnswers + " answers)."),
+      h("li", null, "Time only counts while this tab is visible and you have touched the page in the last 2 minutes."),
+      h("li", null, "Once a week open Weekly report, add your notes, press Copy and paste it to Claude."))));
+}
+
+/* ===================== question runner (quiz + review) ===================== */
+function runQuestions(mount, items, kind, onFinish, opts) {
+  opts = opts || {};
+  let i = 0; const results = [];
+  function ask() {
+    const it = items[i], q = it.q;
+    let picked = null, conf = null; const t0 = Date.now();
+    mount.replaceChildren();
+    const form = h("section", { class: "card", "aria-label": "Question " + (i + 1) + " of " + items.length });
+    form.append(h("div", { class: "tagline" }, (kind === "review" ? "Review · " : "") + "Question " + (i + 1) + " of " + items.length +
+      (kind === "review" ? " · Unit " + it.u.n + ": " + it.u.title : "")));
+    if (opts.keyIdeas) {
+      form.append(h("div", { class: "banner support" }, h("b", null, "Key ideas (support mode) · concept: " + tagName(q.tag)),
+        h("ul", null, it.u.goals.map(g => h("li", null, g)))));
+    }
+    const fs = h("fieldset", null, h("legend", { html: q.q }));
+    if (q.code) fs.append(h("pre", null, q.code));
+    const submit = h("button", { disabled: true, onclick: doSubmit }, "Check my answer");
+    const upd = () => { submit.disabled = !(picked !== null && conf !== null); };
+    q.options.forEach((o, k) => {
+      fs.append(h("label", { class: "opt" }, h("input", { type: "radio", name: "opt", value: String(k), onchange: () => { picked = k; upd(); } }), h("span", { html: o })));
+    });
+    form.append(fs);
+    const cf = h("fieldset", null, h("legend", null, "How sure are you? (choose before you check)"));
+    const row = h("div", { class: "conf" });
+    [["sure", "Sure"], ["unsure", "Unsure"], ["guess", "Guessing"]].forEach(([v, l]) =>
+      row.append(h("label", null, h("input", { type: "radio", name: "conf", value: v, onchange: () => { conf = v; upd(); } }), " " + l)));
+    cf.append(row); form.append(cf, submit);
+    mount.append(form);
+
+    function doSubmit() {
+      const ok = picked === q.a; const ms = Math.min(Date.now() - t0, 600000);
+      const before = S.cards[q.id] ? S.cards[q.id].box : null;
+      S.log.push({ t: Date.now(), u: it.u.id, q: q.id, kind, ok, conf, ms });
+      recordCard(q.id, ok, kind === "review");
+      save(); renderNav();
+      results.push({ it, ok, conf, picked });
+      showFeedback(ok, before);
+    }
+    function showFeedback(ok, before) {
+      mount.replaceChildren();
+      const card = h("section", { class: "card", "aria-label": "Answer feedback" });
+      card.append(h("div", { class: "tagline" }, (kind === "review" ? "Review · " : "") + "Question " + (i + 1) + " of " + items.length));
+      card.append(h("p", { html: "<b>" + q.q + "</b>" }));
+      if (q.code) card.append(h("pre", null, q.code));
+      q.options.forEach((o, k) => {
+        const cls = k === q.a ? "opt correct" : k === picked ? "opt wrong" : "opt";
+        const mark = k === q.a ? "✓ correct answer" : k === picked ? "✗ your answer" : "";
+        card.append(h("div", { class: cls }, h("span", { html: o }), mark && h("span", { class: "mark" }, mark)));
+      });
+      const surewrong = !ok && conf === "sure";
+      const fb = h("div", { class: "fb " + (ok ? "ok" : "no") + (surewrong ? " sure-wrong" : ""), role: "status", tabindex: "-1" },
+        h("b", null, ok ? "✓ Correct. " : "✗ Not quite. "),
+        h("span", { html: q.why }));
+      if (surewrong) fb.append(h("p", null, h("b", null, "You were sure but wrong."), " Those are the most useful mistakes to look at closely. This one is flagged in your weekly report."));
+      if (ok && conf === "guess") fb.append(h("p", null, "Right, but you marked it as a guess. Re-read the explanation so it sticks."));
+      if (kind === "review") {
+        const c = S.cards[q.id];
+        fb.append(h("p", { class: "muted" }, ok
+          ? "Card moved from box " + before + " to box " + c.box + ". Next review in " + BOXES[c.box - 1] + " day" + (BOXES[c.box - 1] === 1 ? "" : "s") + "."
+          : "Card goes back to box 1. You will see it again tomorrow."));
+      }
+      card.append(fb);
+      const last = i === items.length - 1;
+      card.append(h("button", { onclick: () => { i++; if (i < items.length) ask(); else onFinish(results); } }, last ? "See result" : "Next question"));
+      mount.append(card);
+      fb.focus({ preventScroll: true });
+    }
+  }
+  ask();
+}
+
+/* ===================== VIEW: unit ===================== */
+const STEPS = [["goals", "1 Goals"], ["explain", "2 Explain"], ["worked", "3 Worked example"], ["bridge", "4 Solidity / Rust bridge"], ["faded", "5 Fill the blank"], ["quiz", "6 Mastery quiz"], ["practice", "7 Practice"]];
+function viewUnit(app, u, fresh) {
+  if (fresh || !ui.unit || ui.unit.id !== u.id) ui.unit = { id: u.id, step: "goals", reveal: false, guess: "", shown: null };
+  const st = ui.unit;
+  const idx = UNITS.indexOf(u);
+  app.append(h("p", null, h("a", { href: "#/map" }, "← Course map")));
+  app.append(h("h1", null, "Unit " + u.n + ": " + u.title));
+  app.append(h("p", { class: "muted" }, u.hook));
+  const stepper = h("div", { class: "stepper", role: "group", "aria-label": "Unit steps" });
+  STEPS.forEach(([k, label]) => {
+    const b = h("button", { onclick: () => { st.step = k; redraw(); } }, label);
+    if (k === st.step) b.setAttribute("aria-current", "step");
+    stepper.append(b);
+  });
+  app.append(stepper);
+  const body = h("div"); app.append(body);
+  const nav = h("div"); app.append(nav);
+  function go(k) { st.step = k; redraw(); window.scrollTo(0, 0); }
+  function redraw() {
+    app.replaceChildren(); viewUnit(app, u, false);
+  }
+  const pace = paceInfo().mode;
+  const si = STEPS.findIndex(s => s[0] === st.step);
+  if (st.step === "goals") {
+    body.append(h("div", { class: "card" }, h("h2", null, "By the end of this unit you can:"), h("ul", null, u.goals.map(g => h("li", null, g)))));
+    if (pace !== "steady") body.append(paceBanner());
+  } else if (st.step === "explain") {
+    const tmp = document.createElement("div"); tmp.innerHTML = u.explain;
+    const blocks = Array.from(tmp.children);
+    if (st.shown === null) st.shown = pace === "support" ? 1 : blocks.length;
+    const card = h("div", { class: "card explain" });
+    blocks.slice(0, st.shown).forEach(b => card.append(b));
+    body.append(card);
+    if (st.shown < blocks.length) {
+      body.append(h("p", { class: "muted" }, "Support mode: idea " + st.shown + " of " + blocks.length + "."));
+      body.append(h("button", { onclick: () => { st.shown++; redraw(); } }, "Next idea"));
+      body.append(h("button", { class: "secondary", onclick: () => { st.shown = blocks.length; redraw(); } }, "Show everything"));
+    }
+  } else if (st.step === "worked") {
+    const w = u.worked;
+    body.append(h("div", { class: "card" },
+      h("h2", null, "Worked example"),
+      h("p", null, "Read the code below and ", h("b", null, "predict the output first"), ". Write your guess, then reveal what real Lean printed."),
+      h("div", { class: "label-small" }, "Lean code"), h("pre", null, w.code),
+      h("label", { class: "label-small", for: "guess" }, "Your prediction"),
+      h("textarea", { id: "guess", rows: "4", placeholder: "What will Lean print for each #eval / #check?", oninput: ev => { st.guess = ev.target.value; }, value: st.guess }),
+      !st.reveal && h("button", { onclick: () => { st.reveal = true; redraw(); } }, "Reveal output and notes")));
+    if (st.reveal) {
+      body.append(h("div", { class: "card" },
+        h("div", { class: "label-small" }, "Real Lean output (Lean 4.36.0)"), h("pre", { class: "out" }, w.output),
+        st.guess.trim() && h("div", null, h("div", { class: "label-small" }, "Your prediction"), h("pre", null, st.guess)),
+        h("h3", null, "Line by line"), h("ul", null, w.notes.map(n => h("li", { html: n })))));
+    }
+  } else if (st.step === "bridge") {
+    body.append(h("div", { class: "card explain" }, h("h2", null, "Bridge to Solidity and Rust"), h("div", { html: u.bridge })));
+  } else if (st.step === "faded") {
+    const f = u.faded, rec = (S.faded[u.id] = S.faded[u.id] || { first: null, tries: 0 });
+    const done = st.fadedDone === true;
+    const card = h("div", { class: "card" }, h("h2", null, "Fill the blank"), h("p", { html: f.prompt }), h("pre", null, f.code));
+    const fs = h("fieldset", null, h("legend", null, "Which option fills the blank (____)?"));
+    f.options.forEach((o, k) => {
+      const l = h("label", { class: "opt" + (done && k === f.answer ? " correct" : "") },
+        h("input", { type: "radio", name: "fd", value: String(k), disabled: done, onchange: () => { st.fpick = k; fbtn.disabled = false; } }), h("code", null, o));
+      fs.append(l);
+    });
+    const fbtn = h("button", { disabled: true, onclick: () => {
+      const ok = st.fpick === f.answer; const first = rec.tries === 0;
+      rec.tries++; if (first) rec.first = ok;
+      S.log.push({ t: Date.now(), u: u.id, q: u.id + "-faded", kind: "faded", ok, conf: null, ms: null, first });
+      save();
+      if (ok) st.fadedDone = true;
+      st.fmsg = ok ? { ok: true } : { ok: false }; redraw();
+    } }, "Check");
+    card.append(fs);
+    if (!done) card.append(fbtn);
+    if (st.fmsg) card.append(h("div", { class: "fb " + (st.fmsg.ok ? "ok" : "no"), role: "status" },
+      h("b", null, st.fmsg.ok ? "✓ Correct. " : "✗ Not quite, try another option. "), st.fmsg.ok ? h("span", { html: f.why }) : "Re-read the worked example if you are unsure."));
+    body.append(card);
+  } else if (st.step === "quiz") {
+    renderQuizStep(body, u, st, go);
+  } else if (st.step === "practice") {
+    const p = u.practice, us = unitState(u.id);
+    const card = h("div", { class: "card" }, h("h2", null, "Practice in VS Code"), h("p", { html: p.task }));
+    const det = h("details", null, h("summary", null, "Show expected result"), h("pre", { class: "out" }, p.expected));
+    const cb = h("input", { type: "checkbox", id: "pdone", onchange: ev => { us.practice = ev.target.checked; save(); } });
+    cb.checked = !!us.practice;
+    card.append(det, h("p", null, cb, h("label", { for: "pdone" }, " I have done this in VS Code")));
+    if (isMastered(u) && idx + 1 < UNITS.length) card.append(h("a", { class: "btn", href: "#/unit/" + UNITS[idx + 1].id }, "Go to Unit " + UNITS[idx + 1].n));
+    body.append(card);
+  }
+  if (st.step !== "quiz") {
+    if (si > 0) nav.append(h("button", { class: "secondary", onclick: () => go(STEPS[si - 1][0]) }, "← Back"));
+    if (si < STEPS.length - 1) nav.append(h("button", { onclick: () => go(STEPS[si + 1][0]) }, "Next: " + STEPS[si + 1][1].replace(/^\d /, "") + " →"));
+  }
+}
+
+function renderQuizStep(body, u, st, go) {
+  const us = unitState(u.id);
+  const mode = paceInfo().mode;
+  const mount = h("div");
+  function start() {
+    const qs = u.quiz.slice();
+    if (mode === "challenge") qs.push(u.challenge);
+    const ordered = us.attempts > 0 ? shuffle(qs) : qs;
+    const items = ordered.map(q => ({ q, u }));
+    body.replaceChildren(mount);
+    runQuestions(mount, items, "quiz", finish, { keyIdeas: mode === "support" });
+  }
+  function finish(results) {
+    const right = results.filter(r => r.ok).length, p = pct(right, results.length);
+    const was = us.mastered;
+    us.attempts++; us.best = Math.max(us.best, p);
+    const passed = p >= PASS_PCT;
+    if (passed) us.mastered = true;
+    save(); renderNav();
+    mount.replaceChildren();
+    const card = h("section", { class: "card", "aria-label": "Quiz result" });
+    card.append(h("h2", null, passed ? "✓ Unit mastered" : "Not there yet"));
+    card.append(h("p", null, "You scored " + right + " of " + results.length + " (" + p + "%). The gate is " + PASS_PCT + "%. Your best is " + us.best + "%."));
+    const idx = UNITS.indexOf(u);
+    if (passed) {
+      if (!was) card.append(h("p", null, idx + 1 < UNITS.length ? "Unit " + UNITS[idx + 1].n + " is now unlocked." : "That was the last unit. Keep your reviews going."));
+      if (idx + 1 < UNITS.length) card.append(h("a", { class: "btn", href: "#/unit/" + UNITS[idx + 1].id }, "Go to Unit " + UNITS[idx + 1].n));
+      card.append(h("button", { class: "secondary", onclick: () => go("practice") }, "Do the practice task"));
+    } else {
+      if (was) card.append(h("p", { class: "muted" }, "This unit stays mastered from an earlier pass."));
+      const missed = results.filter(r => !r.ok);
+      card.append(h("h3", null, "Correctives: the questions you missed"));
+      missed.forEach(r => {
+        const q = r.it.q;
+        card.append(h("div", { class: "card" },
+          h("div", { html: "<b>" + q.q + "</b>" }), q.code && h("pre", null, q.code),
+          h("p", null, h("b", null, "Correct answer: "), h("span", { html: q.options[q.a] })),
+          h("p", { html: q.why }),
+          h("p", { class: "muted" }, "Concept: " + tagName(q.tag))));
+      });
+      card.append(h("button", { class: "secondary", onclick: () => { st.reveal = true; go("worked"); } }, "Back to the worked example"));
+      card.append(h("button", { class: "secondary", onclick: () => go("explain") }, "Re-read the explanation"));
+      card.append(h("button", { onclick: () => { start(); } }, "Retake the quiz (new order)"));
+    }
+    mount.append(card);
+  }
+  const intro = h("div", { class: "card" },
+    h("h2", null, "Mastery quiz"),
+    h("p", null, u.quiz.length + (mode === "challenge" ? 1 : 0) + " questions, one at a time. Before you check each answer, say how sure you are. You need " + PASS_PCT + "% to master the unit."),
+    mode === "challenge" && h("p", null, h("b", null, "Challenge pace: "), "this quiz includes the extra challenge question."),
+    mode === "support" && h("p", null, h("b", null, "Support pace: "), "key ideas are shown above each question."),
+    us.attempts > 0 && h("p", { class: "muted" }, "Attempts so far: " + us.attempts + ". Best: " + us.best + "%. Questions will be shuffled."),
+    h("button", { onclick: start }, us.attempts > 0 ? "Start retake" : "Start quiz"));
+  body.append(intro);
+}
+
+/* ===================== VIEW: review ===================== */
+function viewReview(app) {
+  app.append(h("h1", null, "Spaced review"));
+  const due = dueIds(), counts = boxCounts(), total = Object.keys(S.cards).length;
+  const boxTable = h("table", null, h("thead", null, h("tr", null, ["Box", "Repeats after", "Cards"].map(t => h("th", null, t)))),
+    h("tbody", null, BOXES.map((d, i) => h("tr", null, h("td", null, "Box " + (i + 1)), h("td", null, d + (d === 1 ? " day" : " days")), h("td", null, String(counts[i]))))));
+  const mount = h("div"); app.append(mount);
+  if (!total) {
+    mount.append(h("div", { class: "card" }, h("p", null, "No review cards yet. Every question you answer in a unit quiz becomes a card. Start with Unit 1."), h("a", { class: "btn", href: "#/unit/u1" }, "Go to Unit 1")));
+    return;
+  }
+  if (!due.length) {
+    const next = Math.min(...Object.values(S.cards).map(c => c.due));
+    mount.append(h("div", { class: "card" }, h("h2", null, "Nothing due right now"), h("p", null, "You have " + total + " cards. The next one is due on " + dayKey(next) + "."), boxTable));
+    return;
+  }
+  const batch = shuffle(due).slice(0, REVIEW_BATCH);   // shuffled = interleaved across units
+  const intro = h("div", { class: "card" }, h("h2", null, due.length + " card" + (due.length === 1 ? "" : "s") + " due"),
+    h("p", null, "Cards from all units are mixed together on purpose (interleaving). This session has " + batch.length + (due.length > batch.length ? " of them; do another session afterwards." : ".")),
+    boxTable,
+    h("button", { onclick: begin }, "Start review"));
+  mount.append(intro);
+  function begin() {
+    mount.replaceChildren();
+    const items = batch.map(id => QMAP[id]);
+    runQuestions(mount, items, "review", results => {
+      const right = results.filter(r => r.ok).length;
+      mount.replaceChildren(h("section", { class: "card" },
+        h("h2", null, "Review finished"), h("p", null, right + " of " + results.length + " correct (" + pct(right, results.length) + "%)."),
+        results.filter(r => !r.ok).length ? h("div", null, h("h3", null, "Missed (back to box 1)"),
+          h("ul", null, results.filter(r => !r.ok).map(r => h("li", null, h("a", { href: "#/unit/" + r.it.u.id }, "Unit " + r.it.u.n), " · " + tagName(r.it.q.tag))))) : h("p", null, "No misses. Nice."),
+        h("a", { class: "btn", href: "#/map" }, "Back to the course map")));
+      renderNav();
+    }, { keyIdeas: paceInfo().mode === "support" });
+  }
+}
+
+/* ===================== weekly report ===================== */
+function buildReport() {
+  const now = Date.now();
+  const days = []; for (let k = 6; k >= 0; k--) days.push(dayKey(addDays(now, -k)));
+  const from = startOfDay(addDays(now, -6));
+  const inWin = S.log.filter(e => e.t >= from && e.t <= now + 1000);
+  const ans = inWin.filter(e => e.kind !== "faded");
+  const right = ans.filter(e => e.ok).length;
+  const mins = days.reduce((s, d) => s + (S.secs[d] || 0), 0) / 60;
+  const active = days.filter(d => (S.secs[d] || 0) >= 60 || inWin.some(e => dayKey(e.t) === d));
+  const p = paceInfo(), L = [];
+  const d = new Date(now);
+  L.push("=== LEAN-DASH WEEKLY REPORT (v1) ===");
+  L.push("Period: " + days[0] + " to " + days[6] + " (last 7 days, local time)");
+  L.push("Generated: " + dayKey(now) + " " + pad(d.getHours()) + ":" + pad(d.getMinutes()));
+  L.push("Course: Lean 4 for blockchain (Ethereum and Solana), " + UNITS.length + " units, first-year level");
+  L.push("");
+  L.push("PROGRESS");
+  L.push("Units mastered: " + UNITS.filter(isMastered).length + " of " + UNITS.length);
+  UNITS.forEach((u, i) => { const us = S.units[u.id]; L.push("- Unit " + u.n + " " + u.title + ": " + unitStatus(i) + ", best " + (us ? us.best : 0) + "%, attempts " + (us ? us.attempts : 0)); });
+  L.push("Current pace mode: " + p.mode + (p.n ? " (last " + p.n + " answers: " + p.right + "/" + p.n + " = " + p.acc + "%)" : " (no answers yet)"));
+  L.push("");
+  L.push("STUDY TIME (active only: tab visible and used in the last 2 minutes)");
+  L.push("Study days: " + active.length + " of 7");
+  L.push("Active minutes: " + Math.round(mins));
+  L.push("By day: " + days.map(x => x.slice(5) + "=" + Math.round((S.secs[x] || 0) / 60)).join(", "));
+  L.push("");
+  L.push("ANSWERS (quiz + review, last 7 days)");
+  L.push("Total answers: " + ans.length + ", correct: " + right + ", accuracy: " + (ans.length ? pct(right, ans.length) + "%" : "n/a"));
+  L.push("Accuracy by unit:");
+  let any = false;
+  UNITS.forEach(u => { const a = ans.filter(e => e.u === u.id); if (a.length) { any = true; const r = a.filter(e => e.ok).length; L.push("- Unit " + u.n + " " + u.title + ": " + r + "/" + a.length + " (" + pct(r, a.length) + "%)"); } });
+  if (!any) L.push("- (none)");
+  const tags = {};
+  ans.forEach(e => { const t = QMAP[e.q].q.tag; (tags[t] = tags[t] || { n: 0, r: 0 }); tags[t].n++; if (e.ok) tags[t].r++; });
+  const weak = Object.entries(tags).filter(([, v]) => v.n >= 2 && v.r < v.n).sort((a, b) => (a[1].r / a[1].n) - (b[1].r / b[1].n) || b[1].n - a[1].n).slice(0, 5);
+  L.push("Weakest concept tags (at least 2 answers, not perfect):");
+  if (weak.length) weak.forEach(([t, v]) => L.push("- " + t + ": " + v.r + "/" + v.n + " (" + pct(v.r, v.n) + "%)")); else L.push("- (none)");
+  L.push("");
+  L.push("CONFIDENCE CHECK");
+  const cw = ans.filter(e => e.conf === "sure" && !e.ok);
+  L.push("Confident but wrong (marked Sure, answered wrong): " + cw.length);
+  cw.slice(-10).forEach(e => { const x = QMAP[e.q]; L.push("- Unit " + x.u.n + " [" + x.q.tag + "] \"" + plain(x.q.q).slice(0, 90) + "\""); });
+  L.push("Marked Guessing but right: " + ans.filter(e => e.conf === "guess" && e.ok).length);
+  const slow = ans.filter(e => e.ms !== null && e.ms >= SLOW_MS).sort((a, b) => b.ms - a.ms);
+  L.push("Slow questions (took over " + SLOW_MS / 1000 + " seconds to answer): " + slow.length);
+  slow.slice(0, 5).forEach(e => { const x = QMAP[e.q]; L.push("- Unit " + x.u.n + " [" + x.q.tag + "] " + Math.round(e.ms / 1000) + "s " + (e.ok ? "right" : "wrong")); });
+  L.push("");
+  L.push("SPACED REVIEW");
+  const bc = boxCounts();
+  L.push("Review backlog (due now): " + dueIds().length + " of " + Object.keys(S.cards).length + " cards");
+  L.push("Cards per box: " + bc.map((c, i) => "box" + (i + 1) + "(" + BOXES[i] + "d)=" + c).join(", "));
+  L.push("Review answers this week: " + ans.filter(e => e.kind === "review").length);
+  L.push("");
+  L.push("FADED EXAMPLES");
+  const fd = inWin.filter(e => e.kind === "faded" && e.first);
+  L.push("Right on the first try: " + fd.filter(e => e.ok).length + " of " + fd.length + " attempted this week");
+  L.push("");
+  L.push("MY NOTES");
+  L.push(S.notes.trim() || "(none)");
+  L.push("");
+  L.push("REQUEST");
+  L.push("Please read this report and write me a self-improvement prompt that I can paste into Claude Code to update my Lean-Dash dashboard. Base it on the numbers above: which units and concept tags I struggle with, whether the pace thresholds (support below " + PACE.supportBelowPct + "%, challenge at " + PACE.challengeAtPct + "% or more) fit me, whether my review backlog is manageable, and what my confident-but-wrong answers suggest. Keep the changes small and concrete, do not make up research claims, and keep every Lean example compile-checked.");
+  L.push("=== END OF REPORT ===");
+  return L.join("\n");
+}
+async function copyText(text, ta) {
+  try { await navigator.clipboard.writeText(text); return true; } catch (e) { /* fall through */ }
+  try { ta.focus(); ta.select(); return document.execCommand("copy"); } catch (e) { return false; }
+}
+function viewReport(app) {
+  app.append(h("h1", null, "Weekly report"));
+  app.append(h("p", null, "This covers the last 7 days. Add your own notes, press ", h("b", null, "Copy report"), ", then paste it into Claude. Claude will write a self-improvement prompt for this dashboard."));
+  const notes = h("textarea", { id: "notes", rows: "4", maxlength: "5000", placeholder: "Anything Claude should know? What felt hard, what felt boring, how much time you really have…", value: S.notes });
+  const out = h("textarea", { id: "reportText", rows: "26", readonly: true, "aria-label": "Report text" });
+  const msg = h("div", { class: "msg", role: "status" });
+  const refresh = () => { out.value = buildReport(); };
+  notes.addEventListener("input", () => { S.notes = notes.value; save(); refresh(); });
+  app.append(h("label", { for: "notes", class: "label-small" }, "Your notes (included in the report)"), notes);
+  app.append(h("div", { class: "card" }, h("button", { onclick: async () => { refresh(); msg.textContent = (await copyText(out.value, out)) ? "✓ Copied. Paste it into Claude." : "Could not copy automatically. The text is selected: press Ctrl+C (Cmd+C on a Mac)."; } }, "Copy report"), msg, out));
+  refresh();
+}
+
+/* ===================== VIEW: method ===================== */
+function viewMethod(app) {
+  app.append(h("h1", null, "Why this dashboard works the way it does"));
+  app.append(h("p", { class: "muted" }, "Each feature is based on a well-known teaching technique. The sources are listed at the bottom so you can read them yourself."));
+  const sec = (title, body) => h("div", { class: "card" }, h("h2", null, title), body);
+  app.append(
+    sec("Practice testing and distributed practice", h("div", null,
+      h("p", null, "Dunlosky and colleagues (2013) reviewed ten common study techniques. They rated ", h("b", null, "practice testing"), " (quizzing yourself) and ", h("b", null, "distributed practice"), " (spreading study over time instead of cramming) as the two with the highest utility."),
+      h("p", null, h("b", null, "Here: "), "every unit ends in a quiz, and every question you answer becomes a review card that comes back after 1, 3, 7, 14 and 30 days (the Leitner box system). A wrong answer sends the card back to box 1."))),
+    sec("Interleaving", h("div", null,
+      h("p", null, "Mixing different topics in one study session, instead of doing one topic at a time. Dunlosky et al. rated interleaved practice as ", h("b", null, "moderate"), " utility."),
+      h("p", null, h("b", null, "Here: "), "the Review tab mixes due cards from all units in random order."))),
+    sec("Worked examples, then faded examples", h("div", null,
+      h("p", null, "Beginners often learn more from studying a fully solved example than from being thrown into a problem (Sweller & Cooper, 1985). Renkl & Atkinson (2002) describe the next step, where solution steps are gradually removed (\"faded\") so you take over a little at a time."),
+      h("p", null, h("b", null, "Here: "), "each unit shows a worked example with real Lean output (you predict first), then a faded example with one blank for you to fill, then the quiz."))),
+    sec("Mastery learning with correctives", h("div", null,
+      h("p", null, "Bloom's mastery learning model: you must reach a set standard on a short test before you move on. If you miss it, you get feedback and corrective work, and then you test again. Kulik, Kulik & Bangert-Drowns (1990) reviewed 108 studies of mastery programmes in a meta-analysis."),
+      h("p", null, h("b", null, "Here: "), PASS_PCT + "% on the unit quiz unlocks the next unit. Below that you see the questions you missed with explanations, links back to the worked example, and a retake in a new order."))),
+    sec("Confidence ratings, pace and time: what is NOT research-backed", h("div", null,
+      h("p", null, "Choosing sure / unsure / guessing before each answer has no research claim made for it here. It is only a way to spot answers that were confidently wrong, which are worth a closer look."),
+      h("p", null, "The pace thresholds (support below " + PACE.supportBelowPct + "%, challenge at " + PACE.challengeAtPct + "% or more), the box intervals and the 2-minute idle cutoff are design choices for this dashboard, not numbers taken from the studies. That is why the weekly report exists: you can tell Claude what is not working and adjust them."))));
+  app.append(h("h2", null, "Reading list"));
+  app.append(h("ul", null, METHOD_SOURCES.map(([t, u]) => h("li", null, link(t, u)))));
+  app.append(h("p", { class: "muted" }, "Sweller & Cooper (1985), \"The use of worked examples as a substitute for problem solving in learning algebra\", Cognition and Instruction. Named here but not linked; search for the title to find it."));
+}
+
+/* ===================== VIEW: sources + setup ===================== */
+function viewSources(app) {
+  app.append(h("h1", null, "Sources and setup"));
+  app.append(h("div", { class: "card" }, h("h2", null, "Set up Lean on your computer"),
+    h("ol", null,
+      h("li", null, "Install ", link("Visual Studio Code", "https://code.visualstudio.com/"), "."),
+      h("li", null, "In VS Code open Extensions, search for ", h("code", null, "Lean 4"), " and install the one whose publisher is ", h("b", null, "leanprover"), " (id ", h("code", null, "leanprover.lean4"), "). Check the publisher name before you click Install. Page: ", link("marketplace listing", "https://marketplace.visualstudio.com/items?itemName=leanprover.lean4"), "."),
+      h("li", null, "Follow the extension's own setup guide. It walks you through installing Lean itself."),
+      h("li", null, "Keep Lean at version 4.32.2 or later (2026 kernel soundness fixes). The examples in this course were tested on Lean 4.36.0."),
+      h("li", null, "Check it works: make a file ending in ", h("code", null, ".lean"), ", type ", h("code", null, "#eval 2 + 3"), ", click on the line and look for ", h("code", null, "5"), " in the Infoview panel."))));
+  app.append(h("h2", null, "Sources used in the course"));
+  app.append(h("ul", null, SOURCES.map(([t, u]) => h("li", null, link(t, u)))));
+  app.append(h("h2", null, "Sources for the teaching method"));
+  app.append(h("ul", null, METHOD_SOURCES.map(([t, u]) => h("li", null, link(t, u)))));
+}
+
+/* ===================== VIEW: data (save / restore) ===================== */
+function viewData(app) {
+  app.append(h("h1", null, "Save and restore progress"));
+  app.append(h("p", null, "Progress is kept in this browser on this computer. To back it up or move it, copy it out as text here and paste it back in later. Nothing is downloaded or sent anywhere."));
+  app.append(h("p", { class: "muted" }, "Answer log: " + S.log.length + " of " + LOG_CAP + " entries kept (the oldest are dropped after that). Browser storage: " + (storageOK ? "working" : "BLOCKED, progress will not survive closing the page") + "."));
+  const ta = h("textarea", { rows: "10", "aria-label": "Progress data", placeholder: "Press Export to fill this box, or paste saved progress here and press Import." });
+  const msg = h("div", { class: "msg", role: "status" });
+  app.append(ta, h("div", null,
+    h("button", { onclick: async () => { ta.value = JSON.stringify(S); msg.textContent = (await copyText(ta.value, ta)) ? "✓ Exported and copied. Save it somewhere safe (a note or file)." : "Exported. The text is in the box: select it all and copy it yourself."; } }, "Export (copy)"),
+    h("button", { class: "secondary", onclick: () => {
+      try {
+        if (!ta.value.trim()) throw new Error("Paste saved progress into the box first.");
+        const s = sanitize(JSON.parse(ta.value));
+        if (!confirm("Replace the progress in this browser with the pasted data? This cannot be undone.")) return;
+        const sk = s._skipped; delete s._skipped; S = s; save(); renderNav(); updateToday();
+        msg.textContent = "✓ Imported " + S.log.length + " log entries" + (sk ? " (" + sk + " damaged entries skipped)" : "") + ".";
+      } catch (e) { msg.textContent = "Import failed: " + (e instanceof SyntaxError ? "that is not valid progress text (it must be the exact text from Export)." : e.message); }
+    } }, "Import (replace)"),
+    h("button", { class: "danger", onclick: () => {
+      if (confirm("Delete ALL progress in this browser? Export first if you might want it back.")) { S = blank(); save(); renderNav(); updateToday(); ta.value = ""; msg.textContent = "Progress reset."; }
+    } }, "Reset everything")), msg);
+}
+
+/* ===================== start ===================== */
+load();
+route();
+</script>
+</body>
+</html>
