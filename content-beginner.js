@@ -592,6 +592,57 @@ const OPT_WHY = {
   U("u7").faded.prompt = "Pick the tactic that finishes this proof automatically. It is arithmetic with a subtraction and a ≤ on Nat.";
   U("u9").faded.why = "The kernel re-checks every proof. It is small, which keeps the part you have to trust manageable.";
 
+
+  // Practice tasks: each one is self-contained. `start` is what to paste first, `solution` is a complete
+  // program that runs on its own, and `solOut` is what Lean prints for it. tests/check-lean-examples.js
+  // runs every solution (and every `breaks` program) on real Lean.
+  const TRANSFER6 = "def transfer (src dst : Account) (amount : Nat)\n    : Except String (Account × Account) :=\n  if amount ≤ src.lamports then\n    .ok ({ src with lamports := src.lamports - amount },\n         { dst with lamports := dst.lamports + amount })\n  else\n    .error s!\"insufficient funds: has {src.lamports}, needs {amount}\"\n\ndef alice : Account := { owner := \"alice\", lamports := 5000 }\ndef bob   : Account := { owner := \"bob\",   lamports := 1200 }";
+  const ACCTS = "def accounts : List Account :=\n  [{ owner := \"alice\", lamports := 5000 },\n   { owner := \"bob\",   lamports := 1200 },\n   { owner := \"carol\", lamports := 300 }]";
+  const FROZEN = ACCOUNT.replace("  lamports : Nat\n", "  lamports : Nat\n  frozen   : Bool\n");
+  const IX = "inductive Instruction where\n  | deposit  (amount : Nat)\n  | withdraw (amount : Nat)\n  | close\n%FREEZE%deriving Repr\n\ndef describe : Instruction → String\n  | .deposit n  => s!\"deposit {n}\"\n  | .withdraw n => s!\"withdraw {n}\"\n  | .close      => \"close account\"\n%DFREEZE%\ndef applyIx (balance : Nat) : Instruction → Nat\n  | .deposit n  => balance + n\n  | .withdraw n => balance - n\n  | .close      => 0\n%AFREEZE%";
+  const ix = (freeze, cases) => IX.replace("%FREEZE%", freeze ? "  | freeze\n" : "").replace("%DFREEZE%", cases ? "  | .freeze     => \"freeze account\"\n" : "").replace("%AFREEZE%", cases ? "  | .freeze     => balance\n" : "");
+  Object.assign(U("u0").practice, { solution: "#eval 2 + 3", solOut: "5" });
+  Object.assign(U("u1").practice, { solution: "#eval 10 ^ 9", solOut: "1000000000" });
+  U("u2").practice = {
+    task: "Your function needs <code>weiPerGwei</code>, so the code below defines it first. Paste it, then add a function <code>gweiToWei</code> that turns gwei into wei, and run it on 30.",
+    start: "def weiPerGwei : Nat := 10 ^ 9",
+    solution: "def weiPerGwei : Nat := 10 ^ 9\n\ndef gweiToWei (g : Nat) : Nat := g * weiPerGwei\n\n#eval gweiToWei 30",
+    solOut: "30000000000", expected: "30000000000"
+  };
+  U("u3").practice = {
+    task: "Paste the code below. Then add a field <code>frozen : Bool</code> under <code>lamports</code>. Lean will report an error on <code>alice</code>, because a field is missing. Fix it by adding <code>frozen := false</code> to alice.",
+    start: ACCOUNT + "\n\ndef alice : Account := { owner := \"alice\", lamports := 5000 }\n\n#eval alice",
+    solution: FROZEN + "\n\ndef alice : Account := { owner := \"alice\", lamports := 5000, frozen := false }\n\n#eval alice",
+    solOut: "{ owner := \"alice\", lamports := 5000, frozen := false }", expected: "{ owner := \"alice\", lamports := 5000, frozen := false }",
+    breaks: { code: FROZEN + "\n\ndef alice : Account := { owner := \"alice\", lamports := 5000 }", contains: "Fields missing" }
+  };
+  U("u4").practice = {
+    task: "Paste the code below, which has no <code>freeze</code> yet. Add a constructor <code>| freeze</code> to <code>Instruction</code> (put it just before <code>deriving Repr</code>). Lean will report missing cases in <code>describe</code> and <code>applyIx</code>. Add the missing lines: <code>describe</code> should give \"freeze account\", and <code>applyIx</code> should return <code>balance</code> unchanged. Then try <code>#eval describe .freeze</code> and <code>#eval applyIx 500 .freeze</code>.",
+    start: ix(false, false),
+    solution: ix(true, true) + "\n\n#eval describe .freeze\n#eval applyIx 500 .freeze",
+    solOut: "\"freeze account\"\n500", expected: "No errors. The two #eval lines print \"freeze account\" and 500.",
+    breaks: { code: ix(true, false), contains: "Missing cases" }
+  };
+  U("u5").practice = {
+    task: "Paste the code below. Then write <code>def richest : List Account → Nat</code>, which returns the largest balance (use <code>max</code>, with 0 for the empty list), and run it on <code>accounts</code>.",
+    start: ACCOUNT + "\n\n" + ACCTS,
+    solution: ACCOUNT + "\n\n" + ACCTS + "\n\ndef richest : List Account → Nat\n  | []        => 0\n  | a :: rest => max a.lamports (richest rest)\n\n#eval richest accounts",
+    solOut: "5000", expected: "5000"
+  };
+  U("u6").practice = {
+    task: "Paste the code below. Then add <code>#eval transfer bob alice 1200</code> (exactly bob's whole balance). Predict the result first, then check.",
+    start: ACCOUNT + "\n\n" + TRANSFER6,
+    solution: ACCOUNT + "\n\n" + TRANSFER6 + "\n\n#eval transfer bob alice 1200",
+    solOut: "Except.ok ({ owner := \"bob\", lamports := 0 }, { owner := \"alice\", lamports := 6200 })",
+    expected: "Except.ok ({ owner := \"bob\", lamports := 0 }, { owner := \"alice\", lamports := 6200 })"
+  };
+  U("u7").practice = {
+    task: "Type <code>theorem t (a b : Nat) (h : a ≤ b) : a - b = 0 := by omega</code> (you can type <code>&lt;=</code> for ≤). Then change <code>by omega</code> to <code>by sorry</code> and read the warning.",
+    solution: "theorem t (a b : Nat) (h : a ≤ b) : a - b = 0 := by omega",
+    solOut: "", expected: "No output for the omega version. With sorry: warning: declaration uses `sorry`",
+    breaks: { code: "theorem t (a b : Nat) (h : a ≤ b) : a - b = 0 := by sorry", contains: "declaration uses `sorry`" }
+  };
+
   // Questions rewritten so they test what the units teach.
   Object.assign(Q("u0q2"), { q: "Which of these is the smallest piece of ether?", options: ["wei", "SOL", "lamport", "dollar"], a: 0, why: "Wei is the smallest piece: 1 ether = 10^18 wei. A lamport is the small unit of Solana's coin, SOL." });
   Object.assign(Q("u3q2"), { options: ["alice[owner]", "alice.owner", "owner(alice)", "alice->owner"] });

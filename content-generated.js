@@ -12,13 +12,13 @@ const GENS = [
 { id: "g:u0:lamports", unit: "u0", tag: "units", make(r) {
   const n = r.int(2, 9);
   return { q: "How many lamports are in " + n + " SOL? Type the number with digits only.", code: null, answer: String(n * 1000000000),
-    hint: "digits only, for example 5000000000",
+    hint: "digits only (commas are fine)",
     why: "1 SOL is 1,000,000,000 lamports, so " + n + " SOL is " + n + " followed by nine zeros: " + (n * 1000000000).toLocaleString("en-GB") + "." };
 } },
 { id: "g:u0:wei", unit: "u0", tag: "units", make(r) {
   const n = r.int(2, 9), a = (BigInt(n) * 10n ** 18n).toString();
   return { q: "How many wei are in " + n + " ether? Type the number with digits only.", code: null, answer: a,
-    hint: "digits only",
+    hint: "digits only (commas are fine)",
     why: "1 ether is 10^18 wei, a 1 followed by 18 zeros. So " + n + " ether is " + n + " followed by 18 zeros." };
 } },
 
@@ -65,7 +65,7 @@ const GENS = [
 } },
 { id: "g:u2:ether", unit: "u2", tag: "units", lean: true, make(r) {
   const a = r.int(2, 9), v = (BigInt(a) * 10n ** 18n).toString();
-  return { q: "What does the last line print? Type all the digits.", code: "def etherToWei (eth : Nat) : Nat := eth * 10 ^ 18\n\n#eval etherToWei " + a, answer: v, hint: "digits only",
+  return { q: "What does the last line print? Type all the digits.", code: "def etherToWei (eth : Nat) : Nat := eth * 10 ^ 18\n\n#eval etherToWei " + a, answer: v, hint: "digits only (commas are fine)",
     why: "10 ^ 18 is a 1 followed by 18 zeros, so " + a + " ether is " + a + " followed by 18 zeros." };
 } },
 

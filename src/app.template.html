@@ -215,7 +215,19 @@ function goodNote(t, minChars, minWords) {   // enough characters and enough dif
   const words = new Set(t.toLowerCase().split(/\s+/).filter(w => /[a-z]/.test(w)));
   return t.length >= minChars && words.size >= minWords;
 }
-function normAns(s) { return String(s).toLowerCase().replace(/[\s,_]/g, ""); }
+/* Compares typed answers with Lean's output. Spaces, capitals and commas are ignored, and the plain keyboard
+   versions of Lean's symbols count as the symbols: -> for →, <= for ≤, >= for ≥, /\ for ∧ and so on. */
+function normAns(s) {
+  return String(s).toLowerCase()
+    .replace(/<->/g, "↔").replace(/->/g, "→").replace(/<-/g, "←")
+    .replace(/<=/g, "≤").replace(/>=/g, "≥").replace(/!=/g, "≠")
+    .replace(/\/\\/g, "∧").replace(/\\\//g, "∨").replace(/\bforall\b/g, "∀")
+    .replace(/[\s,_]/g, "");
+}
+/* 630000000000000 -> 630,000,000,000,000 (only for runs of five or more digits) */
+function groupDigits(t) { return String(t).replace(/\d{5,}/g, m => m.replace(/\B(?=(\d{3})+(?!\d))/g, ",")); }
+function withCommas(t) { const g = groupDigits(t); return g !== String(t) ? h("span", { class: "muted ui", style: "font-size:.8rem" }, " (" + g + ")") : null; }
+const SYMBOL_TIP = "You can type -> for →, <= for ≤, >= for ≥ and /\\ for ∧. Spaces, capital letters and commas don't matter.";
 function prettyDate(iso) { const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso); return m ? Number(m[3]) + " " + MONTHS[Number(m[2]) - 1] + " " + m[1] : iso; }
 
 /* SHA-256 (used to sign saved progress so edits made outside the app can be noticed) */
@@ -529,7 +541,7 @@ function runQuestions(mount, items, kind, onFinish, opts) {
     const upd = () => { submit.disabled = !((typed ? typedVal.trim().length > 0 : picked !== null) && conf !== null); };
     if (typed) {
       fs.append(h("input", { type: "text", name: "typed", autocomplete: "off", autocapitalize: "off", spellcheck: "false", "aria-label": "Your answer", placeholder: q.hint || "", oninput: ev => { typedVal = ev.target.value; upd(); } }));
-      fs.append(h("p", { class: "muted ui", style: "font-size:.8rem" }, "Type what Lean would print. Spaces and capital letters don't matter."));
+      fs.append(h("p", { class: "muted ui", style: "font-size:.8rem" }, "Type what Lean would print. " + SYMBOL_TIP));
     } else {
       perm.forEach((orig, pos) => fs.append(h("label", { class: "opt" }, h("input", { type: "radio", name: "opt", value: String(pos), onchange: () => { picked = pos; upd(); } }), h("span", { html: q.options[orig] }))));
     }
@@ -563,8 +575,8 @@ function runQuestions(mount, items, kind, onFinish, opts) {
       if (q.code) card.append(h("pre", null, q.code));
       let whyPicked = "";
       if (typed) {
-        card.append(h("p", null, h("b", null, "You typed: "), h("code", null, typedVal.trim())));
-        if (!ok) card.append(h("p", null, h("b", null, "Lean prints: "), h("code", null, q.answer)));
+        card.append(h("p", null, h("b", null, "You typed: "), h("code", null, typedVal.trim()), withCommas(typedVal.trim())));
+        if (!ok) card.append(h("p", null, h("b", null, "Lean prints: "), h("code", null, q.answer), withCommas(q.answer)));
       } else {
         perm.forEach((orig, pos) => {
           const isRight = orig === q.a, isPicked = pos === picked;
@@ -682,8 +694,13 @@ function viewUnit(app, u, fresh) {
     renderQuizStep(body, u, st, us, go);
   } else if (st.step === "practice") {
     const p = u.practice;
-    const card = h("div", { class: "card" }, h("h2", null, "Practice"), h("p", { html: p.task }), u.prelude && h("p", { class: "muted" }, "This needs the code in the \"Paste this first\" box on the worked example step."), h("p", { class: "muted" }, "Lean Playground: ", link("live.lean-lang.org", "https://live.lean-lang.org/"), " (needs internet, nothing to install)."));
-    const det = h("details", null, h("summary", null, "Show the expected result"), h("pre", { class: "out" }, p.expected));
+    const card = h("div", { class: "card" }, h("h2", null, "Practice"), h("div", { html: p.task }));
+    if (p.start) card.append(h("div", { class: "label" }, "Start from this code"), h("pre", null, p.start));
+    if (u.prelude) card.append(h("p", { class: "muted" }, "This also needs the code in the \"Paste this first\" box on the worked example step."));
+    card.append(h("p", { class: "muted" }, "Lean Playground: ", link("live.lean-lang.org", "https://live.lean-lang.org/"), " (needs internet, nothing to install)."));
+    card.append(h("p", { class: "muted ui", style: "font-size:.85rem" }, h("b", null, "If Lean shows an error: "), "a message about the 'sorry' axiom, or that something 'contains errors', means an earlier line has a problem, usually a name that isn't defined yet. Look for red underlines, and check you pasted the starting code. Adding ! after #eval doesn't fix it."));
+    const det = h("details", null, h("summary", null, "Show the expected result" + (p.solution ? " and a solution" : "")), h("div", { class: "label" }, "Lean prints"), h("pre", { class: "out" }, p.expected), withCommas(p.expected),
+      p.solution && h("div", { class: "label" }, "A solution"), p.solution && h("pre", null, p.solution));
     const cb = h("input", { type: "checkbox", id: "pdone", onchange: ev => { us.practice = ev.target.checked; save(); } });
     cb.checked = !!us.practice;
     card.append(det, h("p", null, cb, h("label", { for: "pdone" }, " I've done this myself")));
@@ -719,6 +736,7 @@ function renderWorked(body, u, st, us, redraw) {
        : h("p", null, "Read the code and ", h("b", null, "predict the output first"), ". Write your guess, one line per answer (this example prints " + outLines.length + " line" + (outLines.length === 1 ? "" : "s") + "). You need to write one line for each before you can reveal what Lean printed."),
     h("div", { class: "label" }, "Lean code"), h("pre", null, w.code),
     !ro && h("label", { class: "label", for: "guess" }, "Your prediction"), !ro && guessBox,
+    !ro && h("p", { class: "muted ui", style: "font-size:.8rem" }, SYMBOL_TIP + " Copy text exactly as Lean prints it, including the quotes around a string."),
     !st.reveal && revealBtn));
   if (!st.reveal) return;
   if (ro) {
@@ -732,7 +750,7 @@ function renderWorked(body, u, st, us, redraw) {
     h("div", { class: "tbl" }, h("table", { class: "cmp" },
       h("thead", null, h("tr", null, h("th", null, ""), h("th", null, "You wrote"), h("th", null, "Lean printed"))),
       h("tbody", null, outLines.map((l, k) => { const m = mine[k] !== undefined && normAns(mine[k]) === normAns(l);
-        return h("tr", null, h("td", null, h("span", { class: m ? "m-ok" : "m-no" }, m ? "✓" : "✗")), h("td", null, h("code", null, mine[k] === undefined ? "(nothing)" : mine[k])), h("td", null, h("code", null, l))); })))),
+        return h("tr", null, h("td", null, h("span", { class: m ? "m-ok" : "m-no" }, m ? "✓" : "✗")), h("td", null, h("code", null, mine[k] === undefined ? "(nothing)" : mine[k]), withCommas(mine[k] || "")), h("td", null, h("code", null, l), withCommas(l))); })))),
     h("p", null, "You matched " + st.matched + " of " + outLines.length + " lines. " + (st.matched === outLines.length ? "Every line." : "The ones you missed are the useful ones. The notes below say why each line comes out as it does.")),
     h("h3", null, "Line by line"), h("ul", null, w.notes.map(n => h("li", { html: n })))));
   // explain it back
@@ -1045,6 +1063,12 @@ function viewStart(app) {
     h("p", null, h("b", null, "The easy way: the Lean Playground."), " Open ", link("live.lean-lang.org", "https://live.lean-lang.org/"), " in your browser. There is nothing to install. Delete what's in the editor, type or paste code, and the results appear next to it. It needs internet and doesn't save your code."),
     h("p", null, "If you later want to work on your own computer, the ", h("a", { href: "#/sources" }, "Sources"), " page shows how to set up VS Code."),
     h("p", null, "Lean's own website recommends the ", link("Natural Number Game", "https://adam.math.hhu.de/#/g/leanprover-community/NNG4"), " for beginners. It's a free game in your browser and works well alongside this course.")));
+  app.append(card("If Lean shows an error",
+    h("p", null, "Errors are normal and useful. Read the message: it usually says what is wrong. Two common ones:"),
+    h("ul", null,
+      h("li", null, h("b", null, "Unknown identifier"), ": a name isn't defined yet. Check that you pasted the starting code a task gives you, in the same editor, above your own lines."),
+      h("li", null, "A message about the ", h("b", null, "sorry axiom"), " or that something ", h("b", null, "contains errors"), ": an earlier line has an error, so Lean refuses to run later ones. Fix the first error. Adding ! after #eval doesn't help.")),
+    h("p", null, "Lean also accepts plain keyboard versions of its symbols when you write code: ", h("code", null, "<="), " for ≤, ", h("code", null, ">="), " for ≥, ", h("code", null, "->"), " for →.")));
   app.append(card("If it gets hard",
     h("p", null, "Check the ", h("b", null, "Words to know"), " box and the ", h("a", { href: "#/glossary" }, "Glossary"), ". Read the explanation again. If your recent answers go badly, the app switches to Support mode on its own: explanations arrive one idea at a time and every question shows the key ideas."),
     h("p", null, "Once a week the ", h("a", { href: "#/report" }, "Weekly report"), " gives you a summary you can paste to Claude, who can then adjust the app to how you're getting on.")));
@@ -1264,7 +1288,7 @@ route();
 
 /*TEST*/
 if (window.__LEAN_TEST) {   // test builds only: lets the browser tests reach the app's internals
-  const ro = { UNITS, UMAP, QMAP, GENS, GENMAP, KEY, BUILT, blank, save, unitState, isMastered, unitStatus, paceInfo, boxCounts, dueIds, startOfDay, dayKey, prettyDate, normAns, shuffle, sanitize, signText, plain, buildItem, genBuild, route, checkSig, goodNote };
+  const ro = { UNITS, UMAP, QMAP, GENS, GENMAP, KEY, BUILT, blank, save, unitState, isMastered, unitStatus, paceInfo, boxCounts, dueIds, startOfDay, dayKey, prettyDate, normAns, shuffle, sanitize, signText, plain, buildItem, genBuild, route, checkSig, goodNote, groupDigits };
   Object.keys(ro).forEach(k => { window[k] = ro[k]; });
   const rw = { S: [() => S, v => { S = v; }], integrity: [() => integrity, v => { integrity = v; }], RUSH_MS: [() => RUSH_MS, v => { RUSH_MS = v; }], lastAct: [() => lastAct, v => { lastAct = v; }] };
   Object.keys(rw).forEach(k => Object.defineProperty(window, k, { get: rw[k][0], set: rw[k][1], configurable: true }));

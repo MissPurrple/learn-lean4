@@ -28,5 +28,27 @@ for (const u of UNITS) {
   if (got === want) console.log("OK  ", u.id, "worked example output matches (" + want.split("\n").length + " lines)");
   else { failed++; console.log("FAIL", u.id, "\n--- expected\n" + want + "\n--- real Lean\n" + got); }
 }
-console.log(failed ? failed + " unit(s) FAILED" : "All checked worked examples match real Lean.");
+// Practice tasks: every solution must run on its own and print what the course says, and every
+// "break it on purpose" program must produce the error the task describes.
+for (const u of UNITS) {
+  const p = u.practice;
+  if (!p || (!p.solution && !p.breaks)) continue;
+  const run = (code) => {
+    const file = path.join(tmp, u.id + "-practice-" + Math.random().toString(36).slice(2) + ".lean");
+    fs.writeFileSync(file, code + "\n");
+    const r = spawnSync("lean", [file], { encoding: "utf8", timeout: 240000 });
+    return norm(((r.stdout || "") + (r.stderr || "")).split(file).join("FILE"));
+  };
+  if (p.solution) {
+    const got = run(p.solution), want = norm(p.solOut);
+    if (got === want) console.log("OK  ", u.id, "practice solution runs on its own and prints " + (want ? JSON.stringify(want.slice(0, 40)) : "nothing"));
+    else { failed++; console.log("FAIL", u.id, "practice solution\n--- expected\n" + want + "\n--- real Lean\n" + got); }
+  }
+  if (p.breaks) {
+    const got = run(p.breaks.code);
+    if (got.includes(p.breaks.contains)) console.log("OK  ", u.id, "the mistake the task describes gives: " + JSON.stringify(p.breaks.contains));
+    else { failed++; console.log("FAIL", u.id, "expected the error", JSON.stringify(p.breaks.contains), "\n--- real Lean\n" + got); }
+  }
+}
+console.log(failed ? failed + " check(s) FAILED" : "All checked worked examples and practice tasks match real Lean.");
 process.exit(failed ? 1 : 0);

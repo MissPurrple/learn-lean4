@@ -1208,6 +1208,57 @@ const OPT_WHY = {
   U("u7").faded.prompt = "Pick the tactic that finishes this proof automatically. It is arithmetic with a subtraction and a ≤ on Nat.";
   U("u9").faded.why = "The kernel re-checks every proof. It is small, which keeps the part you have to trust manageable.";
 
+
+  // Practice tasks: each one is self-contained. `start` is what to paste first, `solution` is a complete
+  // program that runs on its own, and `solOut` is what Lean prints for it. tests/check-lean-examples.js
+  // runs every solution (and every `breaks` program) on real Lean.
+  const TRANSFER6 = "def transfer (src dst : Account) (amount : Nat)\n    : Except String (Account × Account) :=\n  if amount ≤ src.lamports then\n    .ok ({ src with lamports := src.lamports - amount },\n         { dst with lamports := dst.lamports + amount })\n  else\n    .error s!\"insufficient funds: has {src.lamports}, needs {amount}\"\n\ndef alice : Account := { owner := \"alice\", lamports := 5000 }\ndef bob   : Account := { owner := \"bob\",   lamports := 1200 }";
+  const ACCTS = "def accounts : List Account :=\n  [{ owner := \"alice\", lamports := 5000 },\n   { owner := \"bob\",   lamports := 1200 },\n   { owner := \"carol\", lamports := 300 }]";
+  const FROZEN = ACCOUNT.replace("  lamports : Nat\n", "  lamports : Nat\n  frozen   : Bool\n");
+  const IX = "inductive Instruction where\n  | deposit  (amount : Nat)\n  | withdraw (amount : Nat)\n  | close\n%FREEZE%deriving Repr\n\ndef describe : Instruction → String\n  | .deposit n  => s!\"deposit {n}\"\n  | .withdraw n => s!\"withdraw {n}\"\n  | .close      => \"close account\"\n%DFREEZE%\ndef applyIx (balance : Nat) : Instruction → Nat\n  | .deposit n  => balance + n\n  | .withdraw n => balance - n\n  | .close      => 0\n%AFREEZE%";
+  const ix = (freeze, cases) => IX.replace("%FREEZE%", freeze ? "  | freeze\n" : "").replace("%DFREEZE%", cases ? "  | .freeze     => \"freeze account\"\n" : "").replace("%AFREEZE%", cases ? "  | .freeze     => balance\n" : "");
+  Object.assign(U("u0").practice, { solution: "#eval 2 + 3", solOut: "5" });
+  Object.assign(U("u1").practice, { solution: "#eval 10 ^ 9", solOut: "1000000000" });
+  U("u2").practice = {
+    task: "Your function needs <code>weiPerGwei</code>, so the code below defines it first. Paste it, then add a function <code>gweiToWei</code> that turns gwei into wei, and run it on 30.",
+    start: "def weiPerGwei : Nat := 10 ^ 9",
+    solution: "def weiPerGwei : Nat := 10 ^ 9\n\ndef gweiToWei (g : Nat) : Nat := g * weiPerGwei\n\n#eval gweiToWei 30",
+    solOut: "30000000000", expected: "30000000000"
+  };
+  U("u3").practice = {
+    task: "Paste the code below. Then add a field <code>frozen : Bool</code> under <code>lamports</code>. Lean will report an error on <code>alice</code>, because a field is missing. Fix it by adding <code>frozen := false</code> to alice.",
+    start: ACCOUNT + "\n\ndef alice : Account := { owner := \"alice\", lamports := 5000 }\n\n#eval alice",
+    solution: FROZEN + "\n\ndef alice : Account := { owner := \"alice\", lamports := 5000, frozen := false }\n\n#eval alice",
+    solOut: "{ owner := \"alice\", lamports := 5000, frozen := false }", expected: "{ owner := \"alice\", lamports := 5000, frozen := false }",
+    breaks: { code: FROZEN + "\n\ndef alice : Account := { owner := \"alice\", lamports := 5000 }", contains: "Fields missing" }
+  };
+  U("u4").practice = {
+    task: "Paste the code below, which has no <code>freeze</code> yet. Add a constructor <code>| freeze</code> to <code>Instruction</code> (put it just before <code>deriving Repr</code>). Lean will report missing cases in <code>describe</code> and <code>applyIx</code>. Add the missing lines: <code>describe</code> should give \"freeze account\", and <code>applyIx</code> should return <code>balance</code> unchanged. Then try <code>#eval describe .freeze</code> and <code>#eval applyIx 500 .freeze</code>.",
+    start: ix(false, false),
+    solution: ix(true, true) + "\n\n#eval describe .freeze\n#eval applyIx 500 .freeze",
+    solOut: "\"freeze account\"\n500", expected: "No errors. The two #eval lines print \"freeze account\" and 500.",
+    breaks: { code: ix(true, false), contains: "Missing cases" }
+  };
+  U("u5").practice = {
+    task: "Paste the code below. Then write <code>def richest : List Account → Nat</code>, which returns the largest balance (use <code>max</code>, with 0 for the empty list), and run it on <code>accounts</code>.",
+    start: ACCOUNT + "\n\n" + ACCTS,
+    solution: ACCOUNT + "\n\n" + ACCTS + "\n\ndef richest : List Account → Nat\n  | []        => 0\n  | a :: rest => max a.lamports (richest rest)\n\n#eval richest accounts",
+    solOut: "5000", expected: "5000"
+  };
+  U("u6").practice = {
+    task: "Paste the code below. Then add <code>#eval transfer bob alice 1200</code> (exactly bob's whole balance). Predict the result first, then check.",
+    start: ACCOUNT + "\n\n" + TRANSFER6,
+    solution: ACCOUNT + "\n\n" + TRANSFER6 + "\n\n#eval transfer bob alice 1200",
+    solOut: "Except.ok ({ owner := \"bob\", lamports := 0 }, { owner := \"alice\", lamports := 6200 })",
+    expected: "Except.ok ({ owner := \"bob\", lamports := 0 }, { owner := \"alice\", lamports := 6200 })"
+  };
+  U("u7").practice = {
+    task: "Type <code>theorem t (a b : Nat) (h : a ≤ b) : a - b = 0 := by omega</code> (you can type <code>&lt;=</code> for ≤). Then change <code>by omega</code> to <code>by sorry</code> and read the warning.",
+    solution: "theorem t (a b : Nat) (h : a ≤ b) : a - b = 0 := by omega",
+    solOut: "", expected: "No output for the omega version. With sorry: warning: declaration uses `sorry`",
+    breaks: { code: "theorem t (a b : Nat) (h : a ≤ b) : a - b = 0 := by sorry", contains: "declaration uses `sorry`" }
+  };
+
   // Questions rewritten so they test what the units teach.
   Object.assign(Q("u0q2"), { q: "Which of these is the smallest piece of ether?", options: ["wei", "SOL", "lamport", "dollar"], a: 0, why: "Wei is the smallest piece: 1 ether = 10^18 wei. A lamport is the small unit of Solana's coin, SOL." });
   Object.assign(Q("u3q2"), { options: ["alice[owner]", "alice.owner", "owner(alice)", "alice->owner"] });
@@ -1262,13 +1313,13 @@ const GENS = [
 { id: "g:u0:lamports", unit: "u0", tag: "units", make(r) {
   const n = r.int(2, 9);
   return { q: "How many lamports are in " + n + " SOL? Type the number with digits only.", code: null, answer: String(n * 1000000000),
-    hint: "digits only, for example 5000000000",
+    hint: "digits only (commas are fine)",
     why: "1 SOL is 1,000,000,000 lamports, so " + n + " SOL is " + n + " followed by nine zeros: " + (n * 1000000000).toLocaleString("en-GB") + "." };
 } },
 { id: "g:u0:wei", unit: "u0", tag: "units", make(r) {
   const n = r.int(2, 9), a = (BigInt(n) * 10n ** 18n).toString();
   return { q: "How many wei are in " + n + " ether? Type the number with digits only.", code: null, answer: a,
-    hint: "digits only",
+    hint: "digits only (commas are fine)",
     why: "1 ether is 10^18 wei, a 1 followed by 18 zeros. So " + n + " ether is " + n + " followed by 18 zeros." };
 } },
 
@@ -1315,7 +1366,7 @@ const GENS = [
 } },
 { id: "g:u2:ether", unit: "u2", tag: "units", lean: true, make(r) {
   const a = r.int(2, 9), v = (BigInt(a) * 10n ** 18n).toString();
-  return { q: "What does the last line print? Type all the digits.", code: "def etherToWei (eth : Nat) : Nat := eth * 10 ^ 18\n\n#eval etherToWei " + a, answer: v, hint: "digits only",
+  return { q: "What does the last line print? Type all the digits.", code: "def etherToWei (eth : Nat) : Nat := eth * 10 ^ 18\n\n#eval etherToWei " + a, answer: v, hint: "digits only (commas are fine)",
     why: "10 ^ 18 is a 1 followed by 18 zeros, so " + a + " ether is " + a + " followed by 18 zeros." };
 } },
 
@@ -1502,7 +1553,19 @@ function goodNote(t, minChars, minWords) {   // enough characters and enough dif
   const words = new Set(t.toLowerCase().split(/\s+/).filter(w => /[a-z]/.test(w)));
   return t.length >= minChars && words.size >= minWords;
 }
-function normAns(s) { return String(s).toLowerCase().replace(/[\s,_]/g, ""); }
+/* Compares typed answers with Lean's output. Spaces, capitals and commas are ignored, and the plain keyboard
+   versions of Lean's symbols count as the symbols: -> for →, <= for ≤, >= for ≥, /\ for ∧ and so on. */
+function normAns(s) {
+  return String(s).toLowerCase()
+    .replace(/<->/g, "↔").replace(/->/g, "→").replace(/<-/g, "←")
+    .replace(/<=/g, "≤").replace(/>=/g, "≥").replace(/!=/g, "≠")
+    .replace(/\/\\/g, "∧").replace(/\\\//g, "∨").replace(/\bforall\b/g, "∀")
+    .replace(/[\s,_]/g, "");
+}
+/* 630000000000000 -> 630,000,000,000,000 (only for runs of five or more digits) */
+function groupDigits(t) { return String(t).replace(/\d{5,}/g, m => m.replace(/\B(?=(\d{3})+(?!\d))/g, ",")); }
+function withCommas(t) { const g = groupDigits(t); return g !== String(t) ? h("span", { class: "muted ui", style: "font-size:.8rem" }, " (" + g + ")") : null; }
+const SYMBOL_TIP = "You can type -> for →, <= for ≤, >= for ≥ and /\\ for ∧. Spaces, capital letters and commas don't matter.";
 function prettyDate(iso) { const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso); return m ? Number(m[3]) + " " + MONTHS[Number(m[2]) - 1] + " " + m[1] : iso; }
 
 /* SHA-256 (used to sign saved progress so edits made outside the app can be noticed) */
@@ -1816,7 +1879,7 @@ function runQuestions(mount, items, kind, onFinish, opts) {
     const upd = () => { submit.disabled = !((typed ? typedVal.trim().length > 0 : picked !== null) && conf !== null); };
     if (typed) {
       fs.append(h("input", { type: "text", name: "typed", autocomplete: "off", autocapitalize: "off", spellcheck: "false", "aria-label": "Your answer", placeholder: q.hint || "", oninput: ev => { typedVal = ev.target.value; upd(); } }));
-      fs.append(h("p", { class: "muted ui", style: "font-size:.8rem" }, "Type what Lean would print. Spaces and capital letters don't matter."));
+      fs.append(h("p", { class: "muted ui", style: "font-size:.8rem" }, "Type what Lean would print. " + SYMBOL_TIP));
     } else {
       perm.forEach((orig, pos) => fs.append(h("label", { class: "opt" }, h("input", { type: "radio", name: "opt", value: String(pos), onchange: () => { picked = pos; upd(); } }), h("span", { html: q.options[orig] }))));
     }
@@ -1850,8 +1913,8 @@ function runQuestions(mount, items, kind, onFinish, opts) {
       if (q.code) card.append(h("pre", null, q.code));
       let whyPicked = "";
       if (typed) {
-        card.append(h("p", null, h("b", null, "You typed: "), h("code", null, typedVal.trim())));
-        if (!ok) card.append(h("p", null, h("b", null, "Lean prints: "), h("code", null, q.answer)));
+        card.append(h("p", null, h("b", null, "You typed: "), h("code", null, typedVal.trim()), withCommas(typedVal.trim())));
+        if (!ok) card.append(h("p", null, h("b", null, "Lean prints: "), h("code", null, q.answer), withCommas(q.answer)));
       } else {
         perm.forEach((orig, pos) => {
           const isRight = orig === q.a, isPicked = pos === picked;
@@ -1969,8 +2032,13 @@ function viewUnit(app, u, fresh) {
     renderQuizStep(body, u, st, us, go);
   } else if (st.step === "practice") {
     const p = u.practice;
-    const card = h("div", { class: "card" }, h("h2", null, "Practice"), h("p", { html: p.task }), u.prelude && h("p", { class: "muted" }, "This needs the code in the \"Paste this first\" box on the worked example step."), h("p", { class: "muted" }, "Lean Playground: ", link("live.lean-lang.org", "https://live.lean-lang.org/"), " (needs internet, nothing to install)."));
-    const det = h("details", null, h("summary", null, "Show the expected result"), h("pre", { class: "out" }, p.expected));
+    const card = h("div", { class: "card" }, h("h2", null, "Practice"), h("div", { html: p.task }));
+    if (p.start) card.append(h("div", { class: "label" }, "Start from this code"), h("pre", null, p.start));
+    if (u.prelude) card.append(h("p", { class: "muted" }, "This also needs the code in the \"Paste this first\" box on the worked example step."));
+    card.append(h("p", { class: "muted" }, "Lean Playground: ", link("live.lean-lang.org", "https://live.lean-lang.org/"), " (needs internet, nothing to install)."));
+    card.append(h("p", { class: "muted ui", style: "font-size:.85rem" }, h("b", null, "If Lean shows an error: "), "a message about the 'sorry' axiom, or that something 'contains errors', means an earlier line has a problem, usually a name that isn't defined yet. Look for red underlines, and check you pasted the starting code. Adding ! after #eval doesn't fix it."));
+    const det = h("details", null, h("summary", null, "Show the expected result" + (p.solution ? " and a solution" : "")), h("div", { class: "label" }, "Lean prints"), h("pre", { class: "out" }, p.expected), withCommas(p.expected),
+      p.solution && h("div", { class: "label" }, "A solution"), p.solution && h("pre", null, p.solution));
     const cb = h("input", { type: "checkbox", id: "pdone", onchange: ev => { us.practice = ev.target.checked; save(); } });
     cb.checked = !!us.practice;
     card.append(det, h("p", null, cb, h("label", { for: "pdone" }, " I've done this myself")));
@@ -2006,6 +2074,7 @@ function renderWorked(body, u, st, us, redraw) {
        : h("p", null, "Read the code and ", h("b", null, "predict the output first"), ". Write your guess, one line per answer (this example prints " + outLines.length + " line" + (outLines.length === 1 ? "" : "s") + "). You need to write one line for each before you can reveal what Lean printed."),
     h("div", { class: "label" }, "Lean code"), h("pre", null, w.code),
     !ro && h("label", { class: "label", for: "guess" }, "Your prediction"), !ro && guessBox,
+    !ro && h("p", { class: "muted ui", style: "font-size:.8rem" }, SYMBOL_TIP + " Copy text exactly as Lean prints it, including the quotes around a string."),
     !st.reveal && revealBtn));
   if (!st.reveal) return;
   if (ro) {
@@ -2019,7 +2088,7 @@ function renderWorked(body, u, st, us, redraw) {
     h("div", { class: "tbl" }, h("table", { class: "cmp" },
       h("thead", null, h("tr", null, h("th", null, ""), h("th", null, "You wrote"), h("th", null, "Lean printed"))),
       h("tbody", null, outLines.map((l, k) => { const m = mine[k] !== undefined && normAns(mine[k]) === normAns(l);
-        return h("tr", null, h("td", null, h("span", { class: m ? "m-ok" : "m-no" }, m ? "✓" : "✗")), h("td", null, h("code", null, mine[k] === undefined ? "(nothing)" : mine[k])), h("td", null, h("code", null, l))); })))),
+        return h("tr", null, h("td", null, h("span", { class: m ? "m-ok" : "m-no" }, m ? "✓" : "✗")), h("td", null, h("code", null, mine[k] === undefined ? "(nothing)" : mine[k]), withCommas(mine[k] || "")), h("td", null, h("code", null, l), withCommas(l))); })))),
     h("p", null, "You matched " + st.matched + " of " + outLines.length + " lines. " + (st.matched === outLines.length ? "Every line." : "The ones you missed are the useful ones. The notes below say why each line comes out as it does.")),
     h("h3", null, "Line by line"), h("ul", null, w.notes.map(n => h("li", { html: n })))));
   // explain it back
@@ -2332,6 +2401,12 @@ function viewStart(app) {
     h("p", null, h("b", null, "The easy way: the Lean Playground."), " Open ", link("live.lean-lang.org", "https://live.lean-lang.org/"), " in your browser. There is nothing to install. Delete what's in the editor, type or paste code, and the results appear next to it. It needs internet and doesn't save your code."),
     h("p", null, "If you later want to work on your own computer, the ", h("a", { href: "#/sources" }, "Sources"), " page shows how to set up VS Code."),
     h("p", null, "Lean's own website recommends the ", link("Natural Number Game", "https://adam.math.hhu.de/#/g/leanprover-community/NNG4"), " for beginners. It's a free game in your browser and works well alongside this course.")));
+  app.append(card("If Lean shows an error",
+    h("p", null, "Errors are normal and useful. Read the message: it usually says what is wrong. Two common ones:"),
+    h("ul", null,
+      h("li", null, h("b", null, "Unknown identifier"), ": a name isn't defined yet. Check that you pasted the starting code a task gives you, in the same editor, above your own lines."),
+      h("li", null, "A message about the ", h("b", null, "sorry axiom"), " or that something ", h("b", null, "contains errors"), ": an earlier line has an error, so Lean refuses to run later ones. Fix the first error. Adding ! after #eval doesn't help.")),
+    h("p", null, "Lean also accepts plain keyboard versions of its symbols when you write code: ", h("code", null, "<="), " for ≤, ", h("code", null, ">="), " for ≥, ", h("code", null, "->"), " for →.")));
   app.append(card("If it gets hard",
     h("p", null, "Check the ", h("b", null, "Words to know"), " box and the ", h("a", { href: "#/glossary" }, "Glossary"), ". Read the explanation again. If your recent answers go badly, the app switches to Support mode on its own: explanations arrive one idea at a time and every question shows the key ideas."),
     h("p", null, "Once a week the ", h("a", { href: "#/report" }, "Weekly report"), " gives you a summary you can paste to Claude, who can then adjust the app to how you're getting on.")));

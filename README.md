@@ -65,3 +65,7 @@ python3 build.py --test
 ## Versions and sources
 
 Lean examples were tested on Lean 4.36.0. Keep Lean at 4.32.2 or later because of 2026 kernel soundness fixes. Source links are in the app (Sources page) and in `content.js`.
+
+## Licence
+
+BSD 3-Clause. See `LICENSE`.

@@ -192,12 +192,53 @@ function serve() {
       if (lb.startsWith('1') && (await page.locator('dl.terms dt').count()) < 5) bad.push(id + ' has fewer than 5 terms');
       if (lb.startsWith('2') && (await page.locator('.note.short').count()) !== 1) bad.push(id + ' has no summary');
       if (lb.startsWith('3') && !t.includes('Explain it back')) bad.push(id + ' has no explain-it-back');
+      if (lb.startsWith('7') && !t.includes('If Lean shows an error')) bad.push(id + ' practice lacks the error help');
       if (lb.startsWith('3') && ['u5', 'u6', 'u8'].includes(id) && !t.includes('Paste this first')) bad.push(id + ' lacks the paste-first code');
     }
   }
   check('all 10 units x 7 steps render with no leaked markup, "undefined" or "NaN"', bad.length === 0, bad.join(' | '));
   const prel = await page.evaluate(() => ['u5', 'u6', 'u8'].map(id => UMAP[id].prelude.includes('structure Account')));
   check('units 5, 6 and 8 carry the Account code they depend on', prel.every(Boolean));
+
+  // ---------- plain keyboard symbols, commas, and self-contained practice tasks
+  const sym = await page.evaluate(() => {
+    const ascii = l => l.replace(/≤/g, '<=').replace(/≥/g, '>=').replace(/→/g, '->').replace(/∧/g, '/\\').replace(/∀/g, 'forall').replace(/≠/g, '!=').replace(/←/g, '<-');
+    const bad = []; let withSymbols = 0;
+    UNITS.forEach(u => u.worked.output.split('\n').forEach(l => { const a = ascii(l); if (a !== l) withSymbols++; if (normAns(a) !== normAns(l)) bad.push(u.id + ': ' + l); }));
+    const cases = [
+      normAns('3 <= 5 : Prop') === normAns('3 ≤ 5 : Prop'),
+      normAns('gasCost 21000: Nat -> Nat') === normAns('gasCost 21000 : Nat → Nat'),
+      normAns('gasCost 21000: Nat Nat') !== normAns('gasCost 21000 : Nat → Nat'),
+      normAns('wei: String') !== normAns('"wei" : String'),
+      normAns('-2') === normAns('-2'),
+      normAns('2,000,000,000,000,000,000') === normAns('2000000000000000000'),
+      normAns('630000000000000') !== normAns('6300000000000000'),
+      normAns('a /\\ b') === normAns('a ∧ b'), normAns('x >= 3') === normAns('x ≥ 3'), normAns('a <-> b') === normAns('a ↔ b'),
+      groupDigits('630000000000000') === '630,000,000,000,000', groupDigits('21000') === '21,000', groupDigits('1234') === '1234', groupDigits('u128') === 'u128'
+    ];
+    return { bad, withSymbols, cases };
+  });
+  check('every symbol in every worked output can be typed with the plain keyboard version (' + sym.withSymbols + ' lines checked)', sym.bad.length === 0, sym.bad.join(' | '));
+  check('your cases: <= and -> are accepted, missing quotes and missing arrows are still wrong, commas are fine, a wrong digit is wrong', sym.cases.every(Boolean), JSON.stringify(sym.cases));
+  await page.evaluate(() => { UNITS.forEach(u => { if (u.n < 2) { const us = unitState(u.id); us.mastered = true; us.best = 100; us.history = [{ t: 1, right: 7, total: 7, score: 100 }]; } }); save(); });
+  await page.goto(file + '#/unit/u2'); await page.reload();
+  await page.getByRole('button', { name: /^3 Worked/ }).click();
+  const typed2 = ['2000000000000000000', '3000000000', 'etherToWei (eth : Nat) : Nat', '630,000,000,000,000', 'gasCost 21000 : Nat -> Nat', '42'].join('\n');
+  await page.locator('#guess').fill(typed2);
+  await page.getByRole('button', { name: /Reveal/ }).click();
+  check('Unit 2 worked example: commas and -> are marked right (6 of 6)', (await page.locator('main').innerText()).includes('You matched 6 of 6 lines') && (await page.locator('table.cmp .m-no').count()) === 0);
+  check('big numbers are shown with commas next to what Lean printed', (await page.locator('table.cmp').innerText()).includes('(2,000,000,000,000,000,000)') && (await page.locator('table.cmp').innerText()).includes('(630,000,000,000,000)'));
+  await page.getByRole('button', { name: /^7 Practice/ }).click();
+  const pr2 = await page.locator('main').innerText();
+  check('Unit 2 practice includes the weiPerGwei line to start from', /start from this code/i.test(pr2) && pr2.includes('def weiPerGwei : Nat := 10 ^ 9'));
+  await page.locator('summary', { hasText: 'Show the expected result' }).click();
+  check('Unit 2 practice shows a solution that runs on its own, with commas on the result', (await page.locator('main').innerText()).includes('def gweiToWei (g : Nat) : Nat := g * weiPerGwei') && (await page.locator('main').innerText()).includes('(30,000,000,000)'));
+  const pinfo = await page.evaluate(() => UNITS.map(u => ({ id: u.id, start: u.practice.start || '', solution: u.practice.solution || '', task: u.practice.task })));
+  const needsStart = pinfo.filter(p => ['u2', 'u3', 'u4', 'u5', 'u6'].includes(p.id) && !p.start).map(p => p.id);
+  check('units 2 to 6 each give the code to start from', needsStart.length === 0, needsStart.join());
+  check('every practice that gives a solution makes the solution self-contained (no name used before it is defined)', pinfo.filter(p => p.solution).every(p => !/\bweiPerGwei\b/.test(p.solution) || /def weiPerGwei/.test(p.solution)) && pinfo.filter(p => /Account/.test(p.solution)).every(p => /structure Account/.test(p.solution)));
+  await page.goto(file + '#/start'); await page.reload();
+  check('Start page explains the sorry / contains-errors message', /sorry axiom/.test(await page.locator('main').innerText()) && /Unknown identifier/.test(await page.locator('main').innerText()));
 
   // ---------- the production page has no test hooks and no console-reachable internals
   const prodSrc = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
