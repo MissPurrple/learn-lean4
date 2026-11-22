@@ -120,13 +120,13 @@ dl.terms dt{font-weight:700;margin-top:.55rem}
 dl.terms dd{margin:.1rem 0 0 0}
 ul.marks{list-style:none;padding:0;font-family:system-ui,sans-serif;font-size:.92rem}
 ul.marks li{padding:.28rem 0;border-bottom:1px solid var(--rule)}
-.m-ok{color:var(--good);font-weight:700}.m-no{color:var(--bad);font-weight:700}
+.m-ok{color:var(--good);font-weight:700}.m-no{color:var(--bad);font-weight:700}.m-close{color:var(--warn);font-weight:700}
 .check li{list-style:none;margin:.2rem 0}
 .check{padding-left:0;font-family:system-ui,sans-serif;font-size:.92rem}
 details{margin:.5rem 0}
 summary{cursor:pointer;font-weight:700}
 .msg{min-height:1.4rem;font-weight:600;font-family:system-ui,sans-serif;font-size:.9rem}
-.cmp td:first-child,.cmp th:first-child{width:2rem}
+.cmp td:first-child,.cmp th:first-child{width:7rem}
 @media (max-width:560px){ html{font-size:17px} .block{width:100%} .chain li{width:100%} .chain li+li::before{content:"\2193"} .chain{flex-direction:column} .chain li{flex-direction:column;align-items:stretch} }
 @media print{ header.top,.stepper,button,footer{display:none} }
 </style>
@@ -159,7 +159,9 @@ const PACE = { window: 20, supportBelowPct: 60, supportMinAnswers: 5, challengeA
 const IDLE_MS = 120000;                    // 2 minutes without interaction = idle
 const LOG_CAP = 1500;
 const SLOW_MS = 60000;
-const REVIEW_BATCH = 20;
+const REVIEW_BATCH = 25;                   // cards in one review session
+const MIN_TIMED = 5;                       // answers with a time needed before a review time estimate is shown
+const DETAIL_CAP = 120;                    // characters kept for the code, typed answer and correct answer of a missed typed question
 const MIN_FIX = 12, MIN_FIX_WORDS = 3;     // the "what went wrong" note
 const MIN_EXPLAIN = 25, MIN_EXPLAIN_WORDS = 5;
 let RUSH_MS = 3000;                        // a multiple-choice answer faster than this earns half credit
@@ -227,6 +229,12 @@ function normAns(s) {
 /* 630000000000000 -> 630,000,000,000,000 (only for runs of five or more digits) */
 function groupDigits(t) { return String(t).replace(/\d{5,}/g, m => m.replace(/\B(?=(\d{3})+(?!\d))/g, ",")); }
 function withCommas(t) { const g = groupDigits(t); return g !== String(t) ? h("span", { class: "muted ui", style: "font-size:.8rem" }, " (" + g + ")") : null; }
+/* Keeps text to DETAIL_CAP characters on one line. For code, the end is kept (that is where the #eval line is). */
+function capText(s, keepEnd) {
+  s = String(s === null || s === undefined ? "" : s).replace(/\s+/g, " ").trim();
+  if (s.length <= DETAIL_CAP) return s;
+  return keepEnd ? "…" + s.slice(s.length - (DETAIL_CAP - 1)) : s.slice(0, DETAIL_CAP);
+}
 const SYMBOL_TIP = "You can type -> for →, <= for ≤, >= for ≥ and /\\ for ∧. Spaces, capital letters and commas don't matter.";
 function prettyDate(iso) { const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso); return m ? Number(m[3]) + " " + MONTHS[Number(m[2]) - 1] + " " + m[1] : iso; }
 
@@ -298,6 +306,17 @@ function sanitize(o) {
     const ent = { t: e.t, u: e.u, q: e.q, kind: e.kind, ok: e.ok, conf: e.conf || null, ms: num(e.ms) === null ? null : Math.max(0, Math.min(e.ms, 600000)) };
     if (e.kind === "faded") ent.first = e.first === true;
     if (typeof e.fix === "string" && e.fix) ent.fix = e.fix.slice(0, 300);
+    if (e.kind === "quiz" || e.kind === "review") {
+      if (num(e.credit) !== null && (e.ok ? [0.5, 1] : [0]).includes(e.credit)) ent.credit = e.credit;
+      if (!e.ok && typeof e.typed === "string" && e.typed.trim() && typeof e.correct === "string" && e.correct.trim()) {     // a missed typed question
+        ent.typed = capText(e.typed, false); ent.correct = capText(e.correct, false);
+        if (typeof e.code === "string" && e.code.trim()) ent.code = capText(e.code, true);
+      }
+    }
+    if (e.kind === "predict" && Number.isInteger(e.total) && e.total >= 1 && e.total <= 50 && Number.isInteger(e.matched) && e.matched >= 0 && e.matched <= e.total) {
+      ent.total = e.total; ent.matched = e.matched;
+      ent.close = Number.isInteger(e.close) && e.close >= 0 && e.close <= e.total - e.matched ? e.close : 0;
+    }
     s.log.push(ent);
   }
   s.log = s.log.slice(-LOG_CAP);
@@ -523,6 +542,26 @@ function creditFor(ok, conf, ms, q, kind) {
   if (kind === "quiz" && q.type !== "typed" && ms < RUSH_MS) return { credit: 0.5, why: "Counted as half, because it took under " + Math.round(RUSH_MS / 1000) + " seconds. Read the whole question before you answer." };
   return { credit: 1, why: "" };
 }
+/* Credit for a log entry. Entries saved before credit was stored are worked out again with the same rules. */
+function creditOf(e) {
+  if (typeof e.credit === "number") return e.credit;
+  if (!e.ok) return 0;
+  if (e.conf === "guess") return 0.5;
+  const m = knownQ(e.q) ? qinfo(e.q) : null, typed = m && (m.gen || m.q.type === "typed");
+  if (e.kind === "quiz" && !typed && e.ms !== null && e.ms < RUSH_MS) return 0.5;
+  return 1;
+}
+/* The learner's median time to answer a question, in ms, or null when there are too few timed answers. */
+function medianAnswerMs() {
+  const t = S.log.filter(e => isAnswer(e) && e.ms !== null).map(e => e.ms).sort((a, b) => a - b);
+  if (t.length < MIN_TIMED) return null;
+  const m = t.length >> 1;
+  return t.length % 2 ? t[m] : (t[m - 1] + t[m]) / 2;
+}
+function reviewMinutes(cards) {
+  const med = medianAnswerMs();
+  return med === null ? null : { med, min: Math.max(1, Math.round(cards * med / 60000)) };
+}
 function runQuestions(mount, items, kind, onFinish, opts) {
   opts = opts || {};
   let i = 0; const results = [];
@@ -558,7 +597,11 @@ function runQuestions(mount, items, kind, onFinish, opts) {
       const ms = Math.min(Date.now() - t0, 600000);
       const cr = creditFor(ok, conf, ms, q, kind);
       const before = S.cards[q.id] ? S.cards[q.id].box : null;
-      const entry = { t: Date.now(), u: it.u.id, q: q.id, kind, ok, conf, ms };
+      const entry = { t: Date.now(), u: it.u.id, q: q.id, kind, ok, conf, ms, credit: cr.credit };
+      if (typed && !ok) {                // keep what was shown and typed, because a generated question cannot be looked up again
+        entry.typed = capText(typedVal, false); entry.correct = capText(q.answer, false);
+        if (q.code) entry.code = capText(q.code, true);
+      }
       S.log.push(entry);
       recordCard(q.id, ok, kind === "review");
       save(); renderNav();
@@ -713,6 +756,26 @@ function viewUnit(app, u, fresh) {
   }
 }
 
+/* Compares one predicted line with one line of Lean's output.
+   exact: the same once spaces, capitals and commas are ignored (and -> counts as the arrow).
+   close: differs only by the quotes around a string, or by arrows the prediction left out. Close is NOT counted as right.
+   wrong: anything else. */
+function cmpLine(mine, lean) {
+  if (mine === undefined) return { state: "wrong", why: "" };
+  const a = normAns(mine), b = normAns(lean);
+  if (a === b) return { state: "exact", why: "" };
+  const count = (t, re) => (t.match(re) || []).length, quotes = /["“”]/g;
+  if (a.replace(quotes, "") === b.replace(quotes, "") && count(a, quotes) < count(b, quotes)) return { state: "close", why: "Lean prints the quotes around a string." };
+  if (a.replace(/→/g, "") === b.replace(/→/g, "") && count(a, /→/g) < count(b, /→/g)) return { state: "close", why: "Lean writes an arrow → between the types." };
+  return { state: "wrong", why: "" };
+}
+function compareLines(guess, outLines) {
+  const mine = guess.split("\n").map(x => x.trim()).filter(Boolean);
+  const rows = outLines.map((l, k) => Object.assign({ mine: mine[k], lean: l }, cmpLine(mine[k], l)));
+  return { rows, matched: rows.filter(r => r.state === "exact").length, close: rows.filter(r => r.state === "close").length, total: rows.length };
+}
+const MARK = { exact: ["m-ok", "✓ Exact"], close: ["m-close", "≈ Close"], wrong: ["m-no", "✗ Wrong"] };
+
 /* Worked example: predict, compare line by line, then explain it back. */
 function renderWorked(body, u, st, us, redraw) {
   const w = u.worked, outLines = w.output.split("\n"), ro = !!w.readonly;
@@ -724,10 +787,9 @@ function renderWorked(body, u, st, us, redraw) {
   const guessBox = h("textarea", { id: "guess", rows: Math.max(3, Math.min(8, outLines.length)), placeholder: "One line per answer, in the same order as the code", disabled: st.reveal || ro, oninput: ev => { st.guess = ev.target.value; revealBtn.disabled = !enough(); }, value: st.guess });
   const revealBtn = h("button", { disabled: st.reveal || !enough(), onclick: () => {
     st.reveal = true;
-    const mine = st.guess.split("\n").map(x => x.trim()).filter(Boolean);
-    const matched = outLines.filter((l, k) => mine[k] !== undefined && normAns(mine[k]) === normAns(l)).length;
-    st.matched = matched;
-    if (!ro) S.log.push({ t: Date.now(), u: u.id, q: u.id + "-predict", kind: "predict", ok: matched === outLines.length, conf: null, ms: null });
+    const cmp = compareLines(st.guess, outLines);
+    st.matched = cmp.matched;
+    if (!ro) S.log.push({ t: Date.now(), u: u.id, q: u.id + "-predict", kind: "predict", ok: cmp.matched === cmp.total, conf: null, ms: null, matched: cmp.matched, close: cmp.close, total: cmp.total });
     us.prep.predict = true; save(); redraw();
   } }, ro ? "Show what Lean says" : "Reveal Lean's output");
   body.append(h("div", { class: "card" },
@@ -743,15 +805,16 @@ function renderWorked(body, u, st, us, redraw) {
     body.append(h("div", { class: "card" }, h("div", { class: "label" }, "What Lean says"), h("pre", { class: "out" }, w.output), h("h3", null, "Notes"), h("ul", null, w.notes.map(n => h("li", { html: n })))));
     if (!u.selfx) { us.prep.explain = true; return; }
   }
-  const mine = st.guess.split("\n").map(x => x.trim()).filter(Boolean);
-  st.matched = outLines.filter((l, k) => mine[k] !== undefined && normAns(mine[k]) === normAns(l)).length;
+  const cmp = compareLines(st.guess, outLines);
+  st.matched = cmp.matched;
   if (!ro) body.append(h("div", { class: "card" },
     h("div", { class: "label" }, "Your prediction against real Lean 4.36.0 output"),
     h("div", { class: "tbl" }, h("table", { class: "cmp" },
-      h("thead", null, h("tr", null, h("th", null, ""), h("th", null, "You wrote"), h("th", null, "Lean printed"))),
-      h("tbody", null, outLines.map((l, k) => { const m = mine[k] !== undefined && normAns(mine[k]) === normAns(l);
-        return h("tr", null, h("td", null, h("span", { class: m ? "m-ok" : "m-no" }, m ? "✓" : "✗")), h("td", null, h("code", null, mine[k] === undefined ? "(nothing)" : mine[k]), withCommas(mine[k] || "")), h("td", null, h("code", null, l), withCommas(l))); })))),
-    h("p", null, "You matched " + st.matched + " of " + outLines.length + " lines. " + (st.matched === outLines.length ? "Every line." : "The ones you missed are the useful ones. The notes below say why each line comes out as it does.")),
+      h("thead", null, h("tr", null, h("th", null, "Result"), h("th", null, "You wrote"), h("th", null, "Lean printed"))),
+      h("tbody", null, cmp.rows.map(r => {
+        const [cls, label] = MARK[r.state];
+        return h("tr", null, h("td", null, h("span", { class: cls }, label), r.why && h("div", { class: "muted ui", style: "font-size:.8rem" }, r.why)), h("td", null, h("code", null, r.mine === undefined ? "(nothing)" : r.mine), withCommas(r.mine || "")), h("td", null, h("code", null, r.lean), withCommas(r.lean))); })))),
+    h("p", null, "You matched " + cmp.matched + " of " + cmp.total + " lines exactly." + (cmp.close ? " " + cmp.close + " more " + (cmp.close === 1 ? "was" : "were") + " close, and close does not count as right." : "") + " " + (cmp.matched === cmp.total ? "Every line was exact." : "The ones you missed are the useful ones. The notes below say why each line comes out as it does.")),
     h("h3", null, "Line by line"), h("ul", null, w.notes.map(n => h("li", { html: n })))));
   // explain it back
   const sx = u.selfx;
@@ -861,6 +924,11 @@ function renderQuizStep(body, u, st, us, go) {
 }
 
 /* ===================== VIEW: review ===================== */
+function estimateLine(n) {
+  const est = reviewMinutes(n);
+  if (!est) return h("p", { class: "muted", id: "estimate" }, "No time estimate yet. It appears once you have answered at least " + MIN_TIMED + " questions.");
+  return h("p", { id: "estimate" }, h("b", null, "About " + est.min + " minute" + (est.min === 1 ? "" : "s") + "."), " That is " + n + " card" + (n === 1 ? "" : "s") + " at your median answer time of " + Math.max(1, Math.round(est.med / 1000)) + " seconds. Reading the feedback and writing notes on misses will add to it.");
+}
 function viewReview(app) {
   app.append(h("h1", null, "Spaced review"));
   const due = dueIds(), counts = boxCounts(), total = Object.keys(S.cards).length;
@@ -879,6 +947,7 @@ function viewReview(app) {
   const batch = shuffle(due).slice(0, REVIEW_BATCH);   // shuffled across units on purpose
   mount.append(h("div", { class: "card" }, h("h2", null, due.length + " card" + (due.length === 1 ? "" : "s") + " due"),
     h("p", null, "Cards from every unit are mixed together on purpose. This session has " + batch.length + (due.length > batch.length ? " of them. Do another session afterwards." : ".")),
+    estimateLine(batch.length),
     h("p", { class: "muted" }, "Questions that came from a generator have new numbers each time, so you practise the skill and not one answer."),
     h("div", { class: "tbl" }, boxTable),
     h("button", { onclick: begin }, "Start review")));
@@ -919,6 +988,8 @@ function buildReport() {
   L.push("Units mastered: " + UNITS.filter(isMastered).length + " of " + UNITS.length);
   UNITS.forEach((u, i) => { const us = S.units[u.id]; L.push("- Unit " + u.n + " " + u.title + ": " + unitStatus(i) + ", best " + (us ? us.best : 0) + "%, attempts " + (us ? us.attempts : 0)); });
   L.push("Current pace mode: " + p.mode + (p.n ? " (last " + p.n + " answers: " + p.right + "/" + p.n + " = " + p.acc + "%)" : " (no answers yet)"));
+  const paceAns = S.log.filter(isAnswer).slice(-PACE.window), paceDays = new Set(paceAns.map(e => dayKey(e.t))).size;
+  L.push("The pace figure rests on " + paceAns.length + " answer" + (paceAns.length === 1 ? "" : "s") + " from " + paceDays + " study day" + (paceDays === 1 ? "" : "s") + " (it uses the last " + PACE.window + " answers, whatever their date).");
   L.push("");
   L.push("STUDY TIME (active only: tab visible and used in the last 2 minutes)");
   L.push("Study days: " + active.length + " of 7");
@@ -927,6 +998,8 @@ function buildReport() {
   L.push("");
   L.push("ANSWERS (quiz + review, last 7 days)");
   L.push("Total answers: " + ans.length + ", correct: " + right + ", accuracy: " + (ans.length ? pct(right, ans.length) + "%" : "n/a"));
+  const half = ans.filter(e => e.ok && creditOf(e) === 0.5), halfGuess = half.filter(e => e.conf === "guess").length;
+  L.push("Right answers that earned half credit: " + half.length + " of " + right + " right (" + halfGuess + " marked Guessing, " + (half.length - halfGuess) + " multiple choice under " + RUSH_MS / 1000 + " seconds)");
   L.push("Accuracy by unit:");
   let any = false;
   UNITS.forEach(u => { const a = ans.filter(e => e.u === u.id); if (a.length) { any = true; const r = a.filter(e => e.ok).length; L.push("- Unit " + u.n + " " + u.title + ": " + r + "/" + a.length + " (" + pct(r, a.length) + "%)"); } });
@@ -941,7 +1014,7 @@ function buildReport() {
   ["sure", "unsure", "guess"].forEach(c => { const a = ans.filter(e => e.conf === c); L.push("Marked " + CONF_LABEL[c] + ": " + a.length + " answers, " + (a.length ? pct(a.filter(e => e.ok).length, a.length) + "% right" : "n/a")); });
   const cw = ans.filter(e => e.conf === "sure" && !e.ok);
   L.push("Confident but wrong (marked Sure, answered wrong): " + cw.length);
-  cw.slice(-10).forEach(e => { const x = qinfo(e.q); L.push("- Unit " + x.u.n + " [" + x.tag + "]" + (x.q ? " \"" + plain(x.q.q).slice(0, 90) + "\"" : " (generated question)") + (e.fix ? " my note: " + e.fix : "")); });
+  cw.slice(-10).forEach(e => { const x = qinfo(e.q); L.push("- Unit " + x.u.n + " [" + x.tag + "]" + (x.q ? " \"" + plain(x.q.q).slice(0, 90) + "\"" : " (generated question)") + (e.typed !== undefined ? " | code: `" + (e.code || "(none)") + "` | I typed: `" + e.typed + "` | correct answer: `" + e.correct + "`" : "") + (e.fix ? " | my note: " + e.fix : "")); });
   const slow = ans.filter(e => e.ms !== null && e.ms >= SLOW_MS).sort((a, b) => b.ms - a.ms);
   L.push("Slow questions (took over " + SLOW_MS / 1000 + " seconds to answer): " + slow.length);
   slow.slice(0, 5).forEach(e => { const x = qinfo(e.q); L.push("- Unit " + x.u.n + " [" + x.tag + "] " + Math.round(e.ms / 1000) + "s " + (e.ok ? "right" : "wrong")); });
@@ -955,8 +1028,15 @@ function buildReport() {
   L.push("LEARNING STEPS");
   const fd = inWin.filter(e => e.kind === "faded" && e.first);
   L.push("Fill-the-blank right on the first try: " + fd.filter(e => e.ok).length + " of " + fd.length);
-  const pr = inWin.filter(e => e.kind === "predict");
-  L.push("Worked examples predicted completely right: " + pr.filter(e => e.ok).length + " of " + pr.length);
+  const pr = inWin.filter(e => e.kind === "predict"), counted = pr.filter(e => e.total !== undefined), old = pr.filter(e => e.total === undefined);
+  L.push("Worked-example predictions, lines matched exactly out of lines shown (a close line is counted apart and is not a match):");
+  UNITS.forEach(u => {
+    const a = counted.filter(e => e.u === u.id); if (!a.length) return;
+    const m = a.reduce((x, e) => x + e.matched, 0), t = a.reduce((x, e) => x + e.total, 0), c = a.reduce((x, e) => x + e.close, 0);
+    L.push("- Unit " + u.n + " " + u.title + ": " + m + " of " + t + " lines exact (" + pct(m, t) + "%)" + (c ? ", " + c + " close" : "") + ", over " + a.length + " prediction" + (a.length === 1 ? "" : "s"));
+  });
+  if (old.length) L.push("- " + old.length + " earlier prediction" + (old.length === 1 ? "" : "s") + " saved without line counts (" + old.filter(e => e.ok).length + " completely right)");
+  if (!pr.length) L.push("- (none this week)");
   const ex = UNITS.map(u => S.units[u.id] && S.units[u.id].explain).filter(x => x && x.t >= from);
   L.push("Explain-it-back self-ratings this week: " + (ex.length ? ["covered", "partly", "missed"].map(k => k + "=" + ex.filter(x => x.rating === k).length).join(", ") : "none"));
   L.push("");
@@ -1110,7 +1190,7 @@ function viewProgress(app) {
     h("thead", null, h("tr", null, ["Unit", "Status", "Attempts", "Latest", "Best", "Every attempt"].map(t => h("th", null, t)))),
     h("tbody", null, rows))));
   const qs = {};
-  ans.forEach(e => { const x = qs[e.q] || (qs[e.q] = { r: 0, w: 0, last: null, fix: "" }); if (e.ok) x.r++; else { x.w++; if (e.fix) x.fix = e.fix; } x.last = e.ok; });
+  ans.forEach(e => { const x = qs[e.q] || (qs[e.q] = { r: 0, w: 0, last: null, fix: "", det: null }); if (e.ok) x.r++; else { x.w++; if (e.fix) x.fix = e.fix; if (e.typed !== undefined) x.det = e; } x.last = e.ok; });
   const order = {}; let k = 0;
   UNITS.forEach(u => { u.quiz.concat([u.challenge]).forEach(q => { order[q.id] = k++; }); GENS.filter(g => g.unit === u.id).forEach(g => { order[g.id] = k++; }); });
   const list = Object.keys(qs).filter(knownQ).sort((a, b) => order[a] - order[b]);
@@ -1126,6 +1206,10 @@ function viewProgress(app) {
       !m.gen && h("p", null, h("b", null, "Answer: "), h("span", { html: m.q.options[m.q.a] })),
       !m.gen && h("p", { html: m.q.why }),
       m.gen && h("p", { class: "muted" }, "The numbers change each time, so practise the skill again in the quiz or in Review."),
+      qs[id].det && h("div", null,
+        qs[id].det.code && h("div", null, h("div", { class: "label" }, "Code you were shown"), h("pre", null, qs[id].det.code)),
+        h("p", null, h("b", null, "You typed: "), h("code", null, qs[id].det.typed), withCommas(qs[id].det.typed)),
+        h("p", null, h("b", null, "Correct answer: "), h("code", null, qs[id].det.correct), withCommas(qs[id].det.correct))),
       qs[id].fix && h("p", null, h("b", null, "Your note: "), qs[id].fix),
       h("a", { href: "#/unit/" + m.u.id }, "Go to Unit " + m.u.n)));
   });
@@ -1288,7 +1372,7 @@ route();
 
 /*TEST*/
 if (window.__LEAN_TEST) {   // test builds only: lets the browser tests reach the app's internals
-  const ro = { UNITS, UMAP, QMAP, GENS, GENMAP, KEY, BUILT, blank, save, unitState, isMastered, unitStatus, paceInfo, boxCounts, dueIds, startOfDay, dayKey, prettyDate, normAns, shuffle, sanitize, signText, plain, buildItem, genBuild, route, checkSig, goodNote, groupDigits };
+  const ro = { UNITS, UMAP, QMAP, GENS, GENMAP, KEY, BUILT, blank, save, unitState, isMastered, unitStatus, paceInfo, boxCounts, dueIds, startOfDay, dayKey, prettyDate, normAns, shuffle, sanitize, signText, plain, buildItem, genBuild, route, checkSig, goodNote, groupDigits, capText, cmpLine, compareLines, creditOf, medianAnswerMs, reviewMinutes, buildReport, REVIEW_BATCH };
   Object.keys(ro).forEach(k => { window[k] = ro[k]; });
   const rw = { S: [() => S, v => { S = v; }], integrity: [() => integrity, v => { integrity = v; }], RUSH_MS: [() => RUSH_MS, v => { RUSH_MS = v; }], lastAct: [() => lastAct, v => { lastAct = v; }] };
   Object.keys(rw).forEach(k => Object.defineProperty(window, k, { get: rw[k][0], set: rw[k][1], configurable: true }));

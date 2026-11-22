@@ -77,6 +77,12 @@ function serve() {
   check('progress: confidence table (Sure / Unsure / Guessing)', /You said[\s\S]*Sure[\s\S]*Unsure[\s\S]*Guessing/i.test(prog));
   check('progress: concept table with bars', (await page.locator('h2', { hasText: 'Concepts' }).count()) === 1 && (await page.locator('.tbl .bar').count()) >= 3);
   await page.screenshot({ path: path.join(out, 'progress.png'), fullPage: true });
+  await page.evaluate(() => { S.log.push({ t: Date.now(), u: 'u2', q: 'g:u2:nested', kind: 'quiz', ok: false, conf: 'sure', ms: 4000, credit: 0, code: 'def double (n : Nat) : Nat := n * 2 #eval double (double 5)', typed: '2,0', correct: '20' }); save(); });
+  await page.goto(file + '#/progress'); await page.reload();
+  const prog2 = await page.locator('main').innerText();
+  check('progress: needs-work card for a missed typed question shows the code, what was typed and the right answer', /Questions that need work \(2\)/.test(prog2) && /code you were shown/i.test(prog2) && prog2.includes('#eval double (double 5)') && prog2.includes('You typed: 2,0') && prog2.includes('Correct answer: 20'));
+  await page.evaluate(() => { S.log.pop(); save(); });
+  await page.goto(file + '#/progress'); await page.reload();
   const ctx2 = await browser.newContext(); const p2 = await ctx2.newPage();
   await p2.goto(file + '#/progress');
   check('progress: friendly empty state', (await p2.locator('main').innerText()).includes('Nothing to show yet'));
@@ -155,6 +161,28 @@ function serve() {
   check('hostile history entries dropped', clean.length === 1 && clean[0].right === 2 && clean[0].score === 50, JSON.stringify(clean));
   const hostile = await page.evaluate(() => { const s = sanitize({ v: 1, log: [{ q: 'zzz', u: 'u1', kind: 'quiz', ok: true, t: 1 }, { evil: 1 }, { q: 'g:u1:sub', u: 'u1', kind: 'quiz', ok: true, t: 1, conf: null, ms: 5, fix: 'y'.repeat(900) }], cards: { 'zzz': { box: 2, due: 1 }, 'g:u1:sub': { box: 9, due: 1 } }, notes: '<img src=x onerror=alert(1)>' }); return { log: s.log.length, fix: s.log[0] && s.log[0].fix.length, cards: Object.keys(s.cards).length }; });
   check('hostile import: unknown questions dropped, generated ids kept, long notes capped', hostile.log === 1 && hostile.fix === 300 && hostile.cards === 0, JSON.stringify(hostile));
+  const san = await page.evaluate(() => {
+    const big = 'z'.repeat(500), s = sanitize({ v: 1, log: [
+      { q: 'g:u2:nested', u: 'u2', kind: 'quiz', ok: false, t: 1, conf: 'sure', ms: 5, credit: 0, code: 'a '.repeat(200) + '#eval double (double 5)', typed: big, correct: big },
+      { q: 'g:u2:nested', u: 'u2', kind: 'quiz', ok: true, t: 2, conf: null, ms: 5, credit: 0.5, code: 'x', typed: '1', correct: '2' },
+      { q: 'g:u2:nested', u: 'u2', kind: 'quiz', ok: false, t: 3, conf: null, ms: 5, credit: 1 },
+      { q: 'g:u2:nested', u: 'u2', kind: 'quiz', ok: true, t: 4, conf: null, ms: 5, credit: 0.7 },
+      { q: 'u2-predict', u: 'u2', kind: 'predict', ok: false, t: 5, conf: null, ms: null, matched: 5, close: 9, total: 8 },
+      { q: 'u2-predict', u: 'u2', kind: 'predict', ok: false, t: 6, conf: null, ms: null, matched: 9, total: 8 },
+      { q: 'u2-predict', u: 'u2', kind: 'predict', ok: false, t: 7, conf: null, ms: null, matched: 2, close: 1, total: 8 }] });
+    return s.log; });
+  check('sanitize: missed typed question keeps code, typed and correct, each capped at 120 characters, the code keeping its last line',
+    san[0].typed.length === 120 && san[0].correct.length === 120 && san[0].code.length === 120 && san[0].code.endsWith('#eval double (double 5)') && san[0].code[0] === '…', JSON.stringify(san[0]).slice(0, 200));
+  check('sanitize: details are dropped from right answers, credit must fit the answer, and prediction counts must make sense', san[1].typed === undefined && san[1].credit === 0.5 && san[2].credit === undefined && san[3].credit === undefined && san[4].close === 0 && san[4].matched === 5 && san[5].total === undefined && san[6].close === 1 && san.length === 7, JSON.stringify(san.map(e => [e.credit, e.matched, e.close, e.total])));
+  const cap = await page.evaluate(() => ({ a: capText('a\n\n  b', false), b: capText('x'.repeat(300), false).length, c: capText('y'.repeat(300), true).length }));
+  check('capText puts text on one line and never goes over 120 characters', cap.a === 'a b' && cap.b === 120 && cap.c === 120, JSON.stringify(cap));
+  const cl = await page.evaluate(() => ({
+    exact: cmpLine('  hello, LEAN ', 'hello,lean').state, quote: cmpLine('Hello, Lean', '"Hello, Lean"'), arrow: cmpLine('gasCost 21000 : Nat Nat', 'gasCost 21000 : Nat → Nat'),
+    keyboard: cmpLine('Nat -> Nat', 'Nat → Nat').state, digit: cmpLine('41', '42').state, extraQuote: cmpLine('"5"', '5').state, extraArrow: cmpLine('Nat → Nat → Nat', 'Nat → Nat').state, none: cmpLine(undefined, '5').state }));
+  check('cmpLine: exact stays exact, missing quotes and missing arrows are close with a reason, everything else is wrong',
+    cl.exact === 'exact' && cl.quote.state === 'close' && cl.quote.why === 'Lean prints the quotes around a string.' && cl.arrow.state === 'close' && /arrow/.test(cl.arrow.why) && cl.keyboard === 'exact' && cl.digit === 'wrong' && cl.extraQuote === 'wrong' && cl.extraArrow === 'wrong' && cl.none === 'wrong', JSON.stringify(cl));
+  const cr = await page.evaluate(() => { const was = RUSH_MS; RUSH_MS = 3000; const r = ({ old: creditOf({ q: 'u1q2', ok: true, conf: 'guess', ms: 9000, kind: 'quiz' }), fast: creditOf({ q: 'u1q2', ok: true, conf: 'sure', ms: 1000, kind: 'quiz' }), slow: creditOf({ q: 'u1q2', ok: true, conf: 'sure', ms: 9000, kind: 'quiz' }), typed: creditOf({ q: 'g:u1:sub', ok: true, conf: 'sure', ms: 500, kind: 'quiz' }), wrong: creditOf({ q: 'u1q2', ok: false, conf: 'guess', ms: 1, kind: 'quiz' }), stored: creditOf({ q: 'u1q2', ok: true, conf: 'sure', ms: 1, kind: 'quiz', credit: 1 }) }); RUSH_MS = was; return r; });
+  check('creditOf: Guessing or a fast multiple-choice answer is half, typed and slow are full, wrong is 0, a stored value wins', cr.old === 0.5 && cr.fast === 0.5 && cr.slow === 1 && cr.typed === 1 && cr.wrong === 0 && cr.stored === 1, JSON.stringify(cr));
   const mal = await ctx.newPage(); mal.on('pageerror', e => errors.push('malformed-storage pageerror: ' + e.message));
   await mal.goto(file);
   await mal.evaluate(() => localStorage.setItem('leandash.v1', '{"v":1,"log":"nope","units":[1,2],"cards":7,"secs":null'));
@@ -220,6 +248,14 @@ function serve() {
   });
   check('every symbol in every worked output can be typed with the plain keyboard version (' + sym.withSymbols + ' lines checked)', sym.bad.length === 0, sym.bad.join(' | '));
   check('your cases: <= and -> are accepted, missing quotes and missing arrows are still wrong, commas are fine, a wrong digit is wrong', sym.cases.every(Boolean), JSON.stringify(sym.cases));
+  await page.goto(file + '#/unit/u0'); await page.reload();
+  await page.getByRole('button', { name: /^3 Worked/ }).click();
+  await page.locator('#guess').fill('5\n40\nHello, Lean');
+  await page.getByRole('button', { name: /Reveal/ }).click();
+  const w0 = await page.locator('main').innerText();
+  check('Unit 0 worked example: missing quotes show as Close with the reason, and are not counted as a match',
+    (await page.locator('table.cmp .m-ok').count()) === 2 && (await page.locator('table.cmp .m-close').count()) === 1 && w0.includes('Lean prints the quotes around a string.') && w0.includes('You matched 2 of 3 lines exactly.') && w0.includes('close does not count as right'));
+  check('the prediction is logged with lines matched, close and shown, and is not "completely right"', await page.evaluate(() => { const e = S.log.filter(x => x.kind === 'predict').pop(); return e.matched === 2 && e.close === 1 && e.total === 3 && e.ok === false; }));
   await page.evaluate(() => { UNITS.forEach(u => { if (u.n < 2) { const us = unitState(u.id); us.mastered = true; us.best = 100; us.history = [{ t: 1, right: 7, total: 7, score: 100 }]; } }); save(); });
   await page.goto(file + '#/unit/u2'); await page.reload();
   await page.getByRole('button', { name: /^3 Worked/ }).click();

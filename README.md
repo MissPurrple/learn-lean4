@@ -55,11 +55,11 @@ python3 build.py --test
 ## How the app works
 
 - **Course map:** units unlock in order. A unit is mastered at 80% on its quiz.
-- **Unit steps:** goals, explanation, worked example (predict first, then compare), Solidity and Rust bridge, fill-the-blank, quiz, practice. The quiz unlocks after the groundwork steps are done.
-- **Quiz marking:** multiple-choice options are reshuffled each time. Typed questions use freshly generated numbers. A right answer marked Guessing, or a multiple-choice answer in under 3 seconds, counts half. A wrong answer needs a written note before continuing. Leaving a quiz part way still counts as an attempt.
-- **Review:** Leitner boxes at 1, 3, 7, 14 and 30 days; a wrong answer returns to box 1; due cards from all units are mixed.
-- **Pace:** from the last 20 answers. Under 60% (after at least 5 answers) is Support mode; 85% or more (after at least 10) is Challenge mode.
-- **Weekly report:** the Weekly report page builds a text summary of the last 7 days. The learner adds notes and copies it to Claude, which writes an improvement prompt.
+- **Unit steps:** goals, explanation, worked example (predict first, then compare; each line is marked exact, close or wrong, and only exact counts), Solidity and Rust bridge, fill-the-blank, quiz, practice. The quiz unlocks after the groundwork steps are done.
+- **Quiz marking:** multiple-choice options are reshuffled each time. Typed questions use freshly generated numbers. A right answer marked Guessing, or a multiple-choice answer in under 3 seconds, counts half. A wrong answer needs a written note before continuing. Leaving a quiz part way still counts as an attempt. Each answer is logged with its credit, and a wrong typed answer also keeps the code shown, what was typed and the right answer (120 characters each).
+- **Review:** Leitner boxes at 1, 3, 7, 14 and 30 days; a wrong answer returns to box 1; due cards from all units are mixed. A session holds 25 cards and shows an estimate of minutes from the learner's median answer time.
+- **Pace:** from the last 20 answers. Under 60% (after at least 5 answers) is Support mode; 85% or more (after at least 10) is Challenge mode. The weekly report says how many answers and study days that figure rests on.
+- **Weekly report:** the Weekly report page builds a text summary of the last 7 days, including worked-example lines matched per unit, answers that earned half credit, and the code, typed answer and right answer for confident-but-wrong typed questions. The learner adds notes and copies it to Claude, which writes an improvement prompt.
 - **Saved data:** local storage key `leandash.v1`, signed with SHA-256. If the signature doesn't match, mastery and best scores are cleared and the app says so (the answer log is kept). The signature is a tripwire, not a lock, because the code is readable. The Backup page saves and restores a signed file, which should be copied somewhere other than the Downloads folder.
 
 ## Versions and sources

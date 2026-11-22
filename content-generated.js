@@ -6,6 +6,9 @@
 // tests/check-generated.js runs every family on real Lean and compares the output with
 // the answer computed here, so a generator cannot silently disagree with Lean.
 
+// 4000000000 -> "4,000,000,000", for the explanations (the answer itself can be typed with or without commas).
+function withThousands(digits) { return String(digits).replace(/\B(?=(\d{3})+(?!\d))/g, ","); }
+
 const GENS = [
 
 // ---------- Unit 0 (no Lean code) ----------
@@ -13,13 +16,13 @@ const GENS = [
   const n = r.int(2, 9);
   return { q: "How many lamports are in " + n + " SOL? Type the number with digits only.", code: null, answer: String(n * 1000000000),
     hint: "digits only (commas are fine)",
-    why: "1 SOL is 1,000,000,000 lamports, so " + n + " SOL is " + n + " followed by nine zeros: " + (n * 1000000000).toLocaleString("en-GB") + "." };
+    why: "1 SOL is 1,000,000,000 lamports, so " + n + " SOL is " + n + " followed by nine zeros: " + withThousands(n * 1000000000) + "." };
 } },
 { id: "g:u0:wei", unit: "u0", tag: "units", make(r) {
   const n = r.int(2, 9), a = (BigInt(n) * 10n ** 18n).toString();
   return { q: "How many wei are in " + n + " ether? Type the number with digits only.", code: null, answer: a,
     hint: "digits only (commas are fine)",
-    why: "1 ether is 10^18 wei, a 1 followed by 18 zeros. So " + n + " ether is " + n + " followed by 18 zeros." };
+    why: "1 ether is 10^18 wei, a 1 followed by 18 zeros. So " + n + " ether is " + n + " followed by 18 zeros: " + withThousands(a) + "." };
 } },
 
 // ---------- Unit 1 ----------
@@ -63,10 +66,17 @@ const GENS = [
   return { q: "What does the last line print?", code: "def double (n : Nat) : Nat := n * 2\n\n#eval double (double " + a + ")", answer: String(a * 4), hint: "a number",
     why: "The inner call double " + a + " is " + a * 2 + ". The outer call doubles that: " + a * 4 + "." };
 } },
+{ id: "g:u2:brackets", unit: "u2", tag: "calling", lean: true, make(r) {
+  const a = r.int(2, 20), b = r.int(2, 20), inner = a * 2, first = r.chance(0.5);
+  const call = first ? "fee (double " + a + ") " + b : "fee " + b + " (double " + a + ")";
+  return { q: "What does the last line print? The brackets are worked out first.",
+    code: "def double (n : Nat) : Nat := n * 2\ndef fee (units price : Nat) : Nat := units * price\n\n#eval " + call, answer: String(inner * b), hint: "a number",
+    why: "The brackets are worked out first: double " + a + " is " + inner + ". The line becomes " + (first ? "fee " + inner + " " + b : "fee " + b + " " + inner) + ", and fee multiplies its two inputs: " + inner + " * " + b + " = " + inner * b + "." };
+} },
 { id: "g:u2:ether", unit: "u2", tag: "units", lean: true, make(r) {
   const a = r.int(2, 9), v = (BigInt(a) * 10n ** 18n).toString();
   return { q: "What does the last line print? Type all the digits.", code: "def etherToWei (eth : Nat) : Nat := eth * 10 ^ 18\n\n#eval etherToWei " + a, answer: v, hint: "digits only (commas are fine)",
-    why: "10 ^ 18 is a 1 followed by 18 zeros, so " + a + " ether is " + a + " followed by 18 zeros." };
+    why: "10 ^ 18 is a 1 followed by 18 zeros, so " + a + " ether is " + a + " followed by 18 zeros: " + withThousands(v) + "." };
 } },
 
 // ---------- Unit 3 ----------

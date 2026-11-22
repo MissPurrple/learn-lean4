@@ -33,6 +33,14 @@ const UNIT0 = {
 <li>Ethereum: <b>wei</b>. 1 ether = 10<sup>18</sup> wei. That is a 1 followed by 18 zeros: 1,000,000,000,000,000,000.</li>
 <li>Solana: <b>lamports</b>. 1 SOL = 1,000,000,000 lamports (a billion).</li>
 </ul>
+<p><b>Count the zeros.</b> To turn SOL into lamports, write the number of SOL and then <b>nine zeros</b> after it. The commas split the zeros into groups of three, so there are three groups:</p>
+<div class="tbl"><table>
+<thead><tr><th>SOL</th><th>Lamports</th><th>Zeros after the digit</th></tr></thead>
+<tbody>
+<tr><td>1 SOL</td><td>1,000,000,000</td><td>9 (000, 000, 000)</td></tr>
+<tr><td>4 SOL</td><td>4,000,000,000</td><td>9 (000, 000, 000)</td></tr>
+</tbody></table></div>
+<p>When you type a number in a question you can leave the commas out, but you still need all nine zeros. A missing or extra zero is a different amount of money, so count them before you press the button.</p>
 <p>So a balance is always stored as a whole number. That is why Unit 1 spends so long on whole numbers.</p>
 <p><b>What is a smart contract?</b> It is a small program that lives on the blockchain and follows rules by itself. For example: "only move money out of this account if it holds enough." Ethereum contracts are commonly written in a language called <b>Solidity</b>. Solana programs are commonly written in <b>Rust</b>. You don't need to know either language for this course.</p>
 <p><b>Why does Lean matter here?</b> A smart contract handles real money, and a mistake can be expensive. Programmers normally <b>test</b> their code: they try some inputs and check the answers. But tests only cover the inputs someone thought to try. Lean can check a <b>proof</b>: a step-by-step argument that something is true for <i>every</i> possible input, not just the ones you tried. That is why Lean is used on blockchain projects (you will see real ones in Unit 9).</p>
@@ -172,7 +180,13 @@ u2: {
 <li>after <code>:=</code>: the rule. Multiply the input by <code>weiPerEther</code>.</li>
 </ul>
 <p><b>Calling a function.</b> You don't put brackets or commas round the inputs. You write the name, a space, then the inputs: <code>etherToWei 2</code>. With two inputs it looks like <code>gasCost 21000 30</code>.</p>
-<p>Brackets are only for <b>grouping</b>. In <code>double (double 5)</code> the inner call is worked out first, and its answer becomes the input of the outer call.</p>
+<p>Brackets are only for <b>grouping</b>. In <code>double (double 5)</code> the inner call is worked out first, and its answer becomes the input of the outer call. Here is that evaluation one step at a time, where <code>double</code> multiplies its input by 2:</p>
+<ol>
+<li><code>double (double 5)</code>: Lean starts with the brackets, the inner call <code>double 5</code>.</li>
+<li><code>double 5</code> is 5 * 2 = 10, so the whole line becomes <code>double 10</code>.</li>
+<li><code>double 10</code> is 10 * 2 = 20. The answer is <code>20</code>.</li>
+</ol>
+<p>When you write nested calls, count the brackets: every opening bracket needs a closing one, and the call inside the brackets is the one that happens first.</p>
 <p><b>Gas.</b> On Ethereum, running a transaction costs a fee called <b>gas</b>. A plain transfer of ether uses 21,000 units of gas. In this example the price of one unit is given in <b>gwei</b>, where 1 gwei = 10<sup>9</sup> wei. So the fee is the gas used × the price in gwei × 10<sup>9</sup>, and that is what <code>gasCost</code> works out.</p>
 <p><b>Function types use arrows.</b> <code>Nat → Nat</code> means "give me a Nat and I will give you a Nat". A function with two Nat inputs and a Nat answer has the type <code>Nat → Nat → Nat</code>. If you give only the first input (<code>gasCost 21000</code>), you get back a function that is still waiting for the second one, with type <code>Nat → Nat</code>. This is called <i>partial application</i>.</p>
 <p><b>Functions with no name.</b> <code>fun (n : Nat) => n * 2</code> is a function without a name. It means "take n and give back n × 2".</p>`,
