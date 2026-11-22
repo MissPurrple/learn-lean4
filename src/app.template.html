@@ -1,135 +1,147 @@
 <!doctype html>
-<html lang="en">
+<html lang="en-GB">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Lean Blockchain Dash</title>
+<title>Learn Lean 4</title>
 <link rel="manifest" href="manifest.webmanifest">
-<meta name="theme-color" content="#2f4fd0">
+<meta name="theme-color" content="#9c3d1a">
 <link rel="icon" href="icon-192.png">
 <link rel="apple-touch-icon" href="icon-192.png">
 <style>
 :root{
-  --bg:#f7f7f4; --fg:#1b2230; --muted:#566074; --card:#ffffff; --line:#d6dae3;
-  --accent:#2f4fd0; --accent-fg:#ffffff; --accent-soft:#e8edff;
-  --good:#1f7a36; --good-bg:#e4f4e9; --bad:#b42323; --bad-bg:#fcebeb;
-  --warn:#8a5200; --warn-bg:#fff3d6; --code-bg:#eef0f5; --lock:#8b93a4;
+  --paper:#faf6ee; --card:#fffdf8; --ink:#26211b; --muted:#6a6256; --rule:#d9cfbe;
+  --accent:#9c3d1a; --accent-ink:#fffaf3; --accent-soft:#f3e6d6;
+  --good:#37643a; --good-bg:#e7eedc; --bad:#9a2a2a; --bad-bg:#f6e2dd; --warn:#79580a; --warn-bg:#f4ead0;
+  --code:#efe8da;
 }
 @media (prefers-color-scheme: dark){
   :root{
-    --bg:#12151c; --fg:#e7eaf1; --muted:#a2aabb; --card:#1b2029; --line:#323a4a;
-    --accent:#8ea6ff; --accent-fg:#0d1220; --accent-soft:#232c4a;
-    --good:#6fd08a; --good-bg:#17301f; --bad:#ff8f8f; --bad-bg:#3a1b1b;
-    --warn:#ffcb70; --warn-bg:#3a2d10; --code-bg:#141922; --lock:#7a8397;
+    --paper:#1c1915; --card:#24201b; --ink:#ece5d8; --muted:#a79e8f; --rule:#3b352c;
+    --accent:#e58f5c; --accent-ink:#1c1915; --accent-soft:#33281c;
+    --good:#8fc48a; --good-bg:#1f2b1d; --bad:#ee8f86; --bad-bg:#3a201d; --warn:#e3c06b; --warn-bg:#352b14;
+    --code:#171410;
   }
 }
 *{box-sizing:border-box}
-html{font-size:17px}
-body{margin:0;background:var(--bg);color:var(--fg);font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;line-height:1.55}
+html{font-size:18px}
+body{margin:0;background:var(--paper);color:var(--ink);font-family:Charter,"Iowan Old Style","Palatino Linotype",Palatino,Georgia,serif;line-height:1.6}
 a{color:var(--accent)}
-.skip{position:absolute;left:-999px;top:0;background:var(--accent);color:var(--accent-fg);padding:.5rem 1rem;z-index:10}
+.skip{position:absolute;left:-999px;top:0;background:var(--accent);color:var(--accent-ink);padding:.5rem 1rem;z-index:10}
 .skip:focus{left:0}
-header.top{background:var(--card);border-bottom:1px solid var(--line);position:sticky;top:0;z-index:5}
-.top-in{max-width:62rem;margin:0 auto;padding:.5rem 16px;display:flex;flex-wrap:wrap;gap:.5rem 1rem;align-items:center;justify-content:space-between}
-.brand{font-weight:700;letter-spacing:.01em}
-nav{display:flex;flex-wrap:wrap;gap:.25rem}
-nav a{padding:.35rem .7rem;border-radius:.5rem;text-decoration:none;color:var(--fg);border:1px solid transparent;font-size:.95rem}
-nav a:hover{background:var(--accent-soft)}
-nav a[aria-current="page"]{background:var(--accent-soft);border-color:var(--accent);font-weight:600}
-.pill{display:inline-block;min-width:1.4rem;padding:0 .4rem;margin-left:.3rem;border-radius:1rem;background:var(--warn-bg);color:var(--warn);font-size:.8rem;text-align:center;border:1px solid var(--warn)}
-main:focus{outline:none}
-main{max-width:62rem;margin:0 auto;padding:1rem 16px 4rem}
-h1{font-size:1.6rem;margin:.5rem 0 .75rem;line-height:1.25}
-h2{font-size:1.25rem;margin:1.5rem 0 .5rem}
-h3{font-size:1.05rem;margin:1rem 0 .4rem}
+header.top{border-bottom:1px solid var(--rule);background:var(--paper)}
+.top-in{max-width:56rem;margin:0 auto;padding:.9rem 18px .6rem}
+.brand{font-size:1.45rem;font-weight:700;letter-spacing:-.01em;color:var(--ink);text-decoration:none}
+.sub{display:flex;flex-wrap:wrap;justify-content:space-between;gap:.3rem 1rem;align-items:baseline;margin-top:.25rem}
+nav{display:flex;flex-wrap:wrap;gap:.1rem 1.1rem;font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;font-size:.86rem}
+nav a{color:var(--muted);text-decoration:none;padding:.15rem 0;border-bottom:2px solid transparent}
+nav a:hover{color:var(--ink)}
+nav a[aria-current="page"]{color:var(--ink);border-bottom-color:var(--accent);font-weight:600}
+#today{font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;font-size:.8rem;color:var(--muted)}
+main{max-width:56rem;margin:0 auto;padding:1rem 18px 3rem;outline:none}
+footer{max-width:56rem;margin:0 auto;padding:1.2rem 18px 2.5rem;border-top:1px solid var(--rule);color:var(--muted);font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;font-size:.8rem}
+h1{font-size:1.85rem;line-height:1.2;margin:.6rem 0 .6rem;letter-spacing:-.01em}
+h2{font-size:1.28rem;margin:1.7rem 0 .45rem;line-height:1.25}
+h3{font-size:1.05rem;margin:1.1rem 0 .3rem}
+p{margin:.55rem 0}
 .muted{color:var(--muted)}
-.card{background:var(--card);border:1px solid var(--line);border-radius:.8rem;padding:1rem 1.1rem;margin:.9rem 0}
-.banner{border-left:5px solid var(--accent);background:var(--accent-soft);padding:.7rem 1rem;border-radius:.5rem;margin:.8rem 0}
-.banner.support{border-color:var(--warn);background:var(--warn-bg)}
-.banner.challenge{border-color:var(--good);background:var(--good-bg)}
-code{background:var(--code-bg);padding:.05rem .3rem;border-radius:.3rem;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:.92em}
-pre{background:var(--code-bg);padding:.75rem .9rem;border-radius:.5rem;overflow-x:auto;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:.9rem;line-height:1.45;margin:.5rem 0;white-space:pre}
-pre.out{border-left:4px solid var(--good)}
-.label-small{font-size:.8rem;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);margin:.7rem 0 .1rem;font-weight:600}
-button,.btn{font:inherit;cursor:pointer;border-radius:.5rem;border:1px solid var(--accent);background:var(--accent);color:var(--accent-fg);padding:.5rem 1rem;margin:.25rem .4rem .25rem 0;text-decoration:none;display:inline-block}
+.ui{font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+.card{background:var(--card);border:1px solid var(--rule);border-radius:3px;padding:.9rem 1.1rem;margin:.9rem 0}
+.card>h2:first-child{margin-top:.2rem}
+.note{border-left:3px solid var(--muted);padding:.1rem 0 .1rem .9rem;margin:.9rem 0;color:var(--ink)}
+.note.todo{border-left-color:var(--accent);background:var(--accent-soft);padding:.55rem .9rem;border-radius:0 3px 3px 0}
+.note.short{border-left-color:var(--good);background:var(--good-bg);padding:.55rem .9rem;border-radius:0 3px 3px 0}
+.note.mode{border-left-color:var(--warn);background:var(--warn-bg);padding:.55rem .9rem;border-radius:0 3px 3px 0}
+.note.mode.challenge{border-left-color:var(--good);background:var(--good-bg)}
+.warn{background:var(--warn-bg);border:1px solid var(--warn);padding:.55rem .9rem;border-radius:3px;margin:.8rem 0;font-size:.95rem}
+code{background:var(--code);padding:.05rem .3rem;border-radius:2px;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:.86em}
+pre{background:var(--code);padding:.7rem .9rem;border-radius:3px;overflow-x:auto;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:.84rem;line-height:1.5;margin:.5rem 0;white-space:pre}
+pre.out{border-left:3px solid var(--good)}
+.label{font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;font-size:.72rem;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin:.8rem 0 .15rem;font-weight:600}
+button,.btn{font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;font-size:.9rem;cursor:pointer;border-radius:3px;border:1px solid var(--accent);background:var(--accent);color:var(--accent-ink);padding:.45rem .95rem;margin:.25rem .4rem .25rem 0;text-decoration:none;display:inline-block}
 button.secondary{background:transparent;color:var(--accent)}
 button.danger{background:transparent;color:var(--bad);border-color:var(--bad)}
-button:disabled{opacity:.45;cursor:not-allowed}
+button:disabled{opacity:.4;cursor:not-allowed}
 button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,summary:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
-textarea{width:100%;font:inherit;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:.88rem;background:var(--card);color:var(--fg);border:1px solid var(--line);border-radius:.5rem;padding:.6rem}
+textarea,input[type=text],input[type=search]{width:100%;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:.88rem;background:var(--card);color:var(--ink);border:1px solid var(--rule);border-radius:3px;padding:.55rem .65rem}
+textarea.prose{font-family:inherit;font-size:1rem}
+input[type=search]{max-width:26rem;font-family:inherit}
 /* course map */
-.chain{display:flex;flex-wrap:wrap;gap:.8rem 0;align-items:stretch;list-style:none;padding:0;margin:1rem 0}
+.chain{display:flex;flex-wrap:wrap;gap:.7rem .15rem;list-style:none;padding:0;margin:1rem 0}
 .chain li{display:flex;align-items:center}
-.chain li+li::before{content:"→";color:var(--muted);padding:0 .45rem;font-size:1.2rem}
-.block{width:11.5rem;min-height:9.2rem;display:flex;flex-direction:column;border:2px solid var(--line);border-radius:.8rem;padding:.7rem;background:var(--card);text-decoration:none;color:var(--fg)}
-.block .n{font-size:.8rem;color:var(--muted);font-weight:600}
-.block .t{font-weight:600;margin:.1rem 0 .4rem;flex:1;font-size:.95rem;line-height:1.3}
-.block .st{font-size:.8rem;font-weight:700;margin-bottom:.35rem}
-.block.open{border-color:var(--accent)}
+.chain li+li::before{content:"\203A";color:var(--muted);padding:0 .35rem;font-size:1.3rem}
+.block{width:10.6rem;min-height:8.6rem;display:flex;flex-direction:column;border:1px solid var(--ink);border-radius:2px;padding:.6rem .7rem;background:var(--card);text-decoration:none;color:var(--ink)}
+.block .n{font-family:system-ui,sans-serif;font-size:.72rem;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);font-weight:600}
+.block .t{font-weight:700;margin:.1rem 0 .4rem;flex:1;font-size:.95rem;line-height:1.25}
+.block .st{font-family:system-ui,sans-serif;font-size:.78rem;font-weight:600;margin-bottom:.3rem}
+.block.open{border:2px solid var(--accent)}
 .block.open .st{color:var(--accent)}
-.block.mastered{border-color:var(--good);background:var(--good-bg)}
+.block.mastered{background:var(--good-bg);border-color:var(--good)}
 .block.mastered .st{color:var(--good)}
-.block.locked{border-style:dashed;color:var(--lock);cursor:not-allowed;background:transparent}
-.block.locked .st{color:var(--lock)}
-a.block:hover{box-shadow:0 2px 8px rgba(0,0,0,.18)}
-.bar{position:relative;height:.7rem;background:var(--code-bg);border-radius:.4rem;overflow:hidden;border:1px solid var(--line)}
+.block.locked{border:1px dashed var(--muted);color:var(--muted);background:transparent;cursor:not-allowed}
+a.block:hover{background:var(--accent-soft)}
+.bar{position:relative;height:.45rem;background:var(--code);border:1px solid var(--rule)}
 .bar>i{display:block;height:100%;background:var(--accent)}
 .block.mastered .bar>i{background:var(--good)}
-.bar>b{position:absolute;left:80%;top:0;bottom:0;width:2px;background:var(--fg);opacity:.55}
-.barlabel{font-size:.75rem;color:var(--muted);margin-top:.15rem}
+.bar>b{position:absolute;left:80%;top:-2px;bottom:-2px;width:2px;background:var(--ink);opacity:.6}
+.barlabel{font-family:system-ui,sans-serif;font-size:.72rem;color:var(--muted)}
 /* unit */
-.stepper{display:flex;flex-wrap:wrap;gap:.3rem;margin:.6rem 0}
-.stepper button{margin:0;background:transparent;color:var(--fg);border-color:var(--line);font-size:.88rem;padding:.3rem .65rem}
-.stepper button[aria-current="step"]{background:var(--accent);color:var(--accent-fg);border-color:var(--accent)}
-.explain p,.explain li{max-width:46rem}
-.opt{display:block;border:1px solid var(--line);border-radius:.5rem;padding:.5rem .75rem;margin:.4rem 0;cursor:pointer;background:var(--card)}
+.stepper{display:flex;flex-wrap:wrap;gap:.2rem .3rem;margin:.7rem 0;border-bottom:1px solid var(--rule);padding-bottom:.5rem}
+.stepper button{margin:0;background:transparent;color:var(--muted);border-color:transparent;font-size:.84rem;padding:.3rem .55rem;border-radius:2px}
+.stepper button:hover{color:var(--ink);background:var(--accent-soft)}
+.stepper button[aria-current="step"]{color:var(--accent-ink);background:var(--accent);border-color:var(--accent)}
+.explain p,.explain li{max-width:42rem}
+.opt{display:block;border:1px solid var(--rule);border-radius:3px;padding:.45rem .75rem;margin:.35rem 0;cursor:pointer;background:var(--card)}
 .opt:hover{background:var(--accent-soft)}
 .opt input{margin-right:.55rem}
 .opt.correct{border-color:var(--good);background:var(--good-bg);cursor:default}
 .opt.wrong{border-color:var(--bad);background:var(--bad-bg);cursor:default}
-.opt .mark{font-weight:700;margin-left:.5rem;font-size:.85rem}
-.conf{display:flex;flex-wrap:wrap;gap:.4rem;margin:.4rem 0}
-.conf label{border:1px solid var(--line);border-radius:2rem;padding:.3rem .9rem;cursor:pointer;background:var(--card)}
+.opt .mark{font-family:system-ui,sans-serif;font-weight:700;margin-left:.5rem;font-size:.8rem}
+.conf{display:flex;flex-wrap:wrap;gap:.4rem;margin:.4rem 0;font-family:system-ui,sans-serif;font-size:.9rem}
+.conf label{border:1px solid var(--rule);border-radius:3px;padding:.28rem .85rem;cursor:pointer;background:var(--card)}
 .conf label:has(input:checked){border-color:var(--accent);background:var(--accent-soft);font-weight:600}
 fieldset{border:0;padding:0;margin:0}
-legend{padding:0;font-weight:600;margin-bottom:.4rem}
-.fb{border-radius:.5rem;padding:.7rem .9rem;margin:.7rem 0}
-.fb.ok{background:var(--good-bg);border-left:5px solid var(--good)}
-.fb.no{background:var(--bad-bg);border-left:5px solid var(--bad)}
+legend{padding:0;font-weight:700;margin-bottom:.4rem}
+.fb{border-radius:3px;padding:.65rem .9rem;margin:.7rem 0}
+.fb.ok{background:var(--good-bg);border-left:4px solid var(--good)}
+.fb.no{background:var(--bad-bg);border-left:4px solid var(--bad)}
 .fb.sure-wrong{outline:2px dashed var(--warn)}
-.tagline{font-size:.8rem;color:var(--muted)}
-.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(15rem,1fr));gap:.8rem}
-.stat{background:var(--card);border:1px solid var(--line);border-radius:.6rem;padding:.6rem .8rem}
-.stat b{display:block;font-size:1.4rem}
-table{border-collapse:collapse;width:100%;font-size:.92rem}
-th,td{border-bottom:1px solid var(--line);padding:.35rem .5rem;text-align:left}
-details{margin:.5rem 0}
-summary{cursor:pointer;font-weight:600}
-.msg{min-height:1.4rem;font-weight:600}
-.warn{background:var(--warn-bg);border:1px solid var(--warn);color:var(--fg);padding:.5rem .8rem;border-radius:.5rem;margin:.6rem 0}
-.tipbox{background:var(--accent-soft);border-left:5px solid var(--accent);border-radius:.5rem;padding:.6rem .9rem;margin:.6rem 0}
-.summary{background:var(--good-bg);border-left:5px solid var(--good);border-radius:.5rem;padding:.6rem .9rem;margin:.6rem 0}
+.tagline{font-family:system-ui,sans-serif;font-size:.78rem;color:var(--muted)}
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(12rem,1fr));gap:.7rem}
+.stat{background:var(--card);border:1px solid var(--rule);border-radius:3px;padding:.55rem .8rem}
+.stat b{display:block;font-size:1.5rem}
+.stat small{color:var(--muted);font-family:system-ui,sans-serif}
+.tbl{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:.9rem;font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+th,td{border-bottom:1px solid var(--rule);padding:.35rem .5rem;text-align:left;vertical-align:top}
+th{font-size:.74rem;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)}
 dl.terms{margin:.3rem 0}
 dl.terms dt{font-weight:700;margin-top:.55rem}
-dl.terms dd{margin:.1rem 0 0 0;color:var(--fg)}
-ul.marks{list-style:none;padding:0}
-ul.marks li{padding:.25rem 0;border-bottom:1px solid var(--line)}
+dl.terms dd{margin:.1rem 0 0 0}
+ul.marks{list-style:none;padding:0;font-family:system-ui,sans-serif;font-size:.92rem}
+ul.marks li{padding:.28rem 0;border-bottom:1px solid var(--rule)}
 .m-ok{color:var(--good);font-weight:700}.m-no{color:var(--bad);font-weight:700}
-.tbl{overflow-x:auto}
-.stat small{color:var(--muted)}
-input[type=search]{font:inherit;width:100%;max-width:26rem;padding:.45rem .6rem;border:1px solid var(--line);border-radius:.5rem;background:var(--card);color:var(--fg)}
-@media (max-width:560px){ .block{width:100%} .chain li{width:100%} .chain li+li::before{content:"↓"; padding:0 .45rem;} .chain{flex-direction:column} .chain li{flex-direction:column;align-items:stretch} }
-@media print{ header.top,.stepper,button{display:none} }
+.check li{list-style:none;margin:.2rem 0}
+.check{padding-left:0;font-family:system-ui,sans-serif;font-size:.92rem}
+details{margin:.5rem 0}
+summary{cursor:pointer;font-weight:700}
+.msg{min-height:1.4rem;font-weight:600;font-family:system-ui,sans-serif;font-size:.9rem}
+.cmp td:first-child,.cmp th:first-child{width:2rem}
+@media (max-width:560px){ html{font-size:17px} .block{width:100%} .chain li{width:100%} .chain li+li::before{content:"\2193"} .chain{flex-direction:column} .chain li{flex-direction:column;align-items:stretch} }
+@media print{ header.top,.stepper,button,footer{display:none} }
 </style>
 </head>
 <body>
 <a class="skip" href="#app">Skip to content</a>
 <header class="top"><div class="top-in">
-  <span class="brand">Lean &middot; Blockchain Dash</span>
-  <nav id="nav" aria-label="Main"></nav>
-  <span class="muted" id="today" aria-live="off"></span>
+  <a class="brand" href="#/map">Learn Lean 4</a>
+  <div class="sub">
+    <nav id="nav" aria-label="Main"></nav>
+    <span id="today"></span>
+  </div>
 </div></header>
 <main id="app" tabindex="-1"></main>
+<footer id="foot"></footer>
 <noscript><p style="padding:1rem">This page needs JavaScript to run.</p></noscript>
 
 <script>
@@ -138,16 +150,22 @@ input[type=search]{font:inherit;width:100%;max-width:26rem;padding:.45rem .6rem;
 <script>
 "use strict";
 /* ===================== constants ===================== */
-const KEY = "leandash.v1";
+const BUILT = "/*__BUILT__*/";             // date of the build, YYYY-MM-DD
+const KEY = "leandash.v1";                 // storage key (unchanged so earlier progress is kept)
+const SALT = "learn-lean-4|v2|";
 const DAY = 86400000;
-const BOXES = [1, 3, 7, 14, 30];          // Leitner box intervals in days
+const BOXES = [1, 3, 7, 14, 30];           // Leitner box intervals in days
 const PASS_PCT = 80;                       // mastery gate
 const PACE = { window: 20, supportBelowPct: 60, supportMinAnswers: 5, challengeAtPct: 85, challengeMinAnswers: 10 };
 const IDLE_MS = 120000;                    // 2 minutes without interaction = idle
 const LOG_CAP = 1500;
 const SLOW_MS = 60000;
 const REVIEW_BATCH = 20;
+const MIN_FIX = 12;                        // characters needed in the "what went wrong" note
+const MIN_PREDICT = 3, MIN_EXPLAIN = 25;
+let RUSH_MS = window.__LEAN_TEST && typeof window.__RUSH_MS === "number" ? window.__RUSH_MS : 3000;   // a multiple-choice answer faster than this earns half credit
 const CONF_LABEL = { sure: "Sure", unsure: "Unsure", guess: "Guessing" };
+const MONTHS = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
 
 /* ===================== content lookup ===================== */
 const UMAP = {}, QMAP = {};
@@ -156,8 +174,14 @@ UNITS.forEach(u => {
   u.quiz.forEach(q => { QMAP[q.id] = { q, u }; });
   QMAP[u.challenge.id] = { q: u.challenge, u };
 });
+function qinfo(id) {                       // static or generated question id -> { u, tag, label, q? }
+  if (QMAP[id]) return { u: QMAP[id].u, tag: QMAP[id].q.tag, q: QMAP[id].q, gen: false };
+  const g = GENMAP[id];
+  return g ? { u: UMAP[g.unit], tag: g.tag, gen: true } : null;
+}
+function knownQ(id) { return !!(QMAP[id] || GENMAP[id]); }
 
-/* ===================== small helpers ===================== */
+/* ===================== helpers ===================== */
 function h(tag, props, ...kids) {
   const e = document.createElement(tag);
   if (props) for (const k in props) {
@@ -176,7 +200,9 @@ function h(tag, props, ...kids) {
   return e;
 }
 function plain(html) { return (new DOMParser().parseFromString(html, "text/html").body.textContent || "").replace(/\s+/g, " ").trim(); }
-function shuffle(a) { a = a.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
+function rndInt(n) { const a = new Uint32Array(1); crypto.getRandomValues(a); return a[0] % n; }
+const R = { int: (lo, hi) => lo + rndInt(hi - lo + 1), chance: p => rndInt(1000000) / 1000000 < p };
+function shuffle(a) { a = a.slice(); for (let i = a.length - 1; i > 0; i--) { const j = rndInt(i + 1); [a[i], a[j]] = [a[j], a[i]]; } return a; }
 function pad(n) { return String(n).padStart(2, "0"); }
 function dayKey(ts) { const d = new Date(ts); return d.getFullYear() + "-" + pad(d.getMonth() + 1) + "-" + pad(d.getDate()); }
 function startOfDay(ts) { const d = new Date(ts); d.setHours(0, 0, 0, 0); return d.getTime(); }
@@ -184,37 +210,92 @@ function addDays(ts, k) { const d = new Date(startOfDay(ts)); d.setDate(d.getDat
 function pct(a, b) { return b ? Math.round(100 * a / b) : 0; }
 function tagName(t) { return t.replace(/-/g, " "); }
 function link(text, href) { return h("a", { href, target: "_blank", rel: "noopener noreferrer" }, text); }
+function normAns(s) { return String(s).toLowerCase().replace(/[\s,_]/g, ""); }
+function prettyDate(iso) { const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso); return m ? Number(m[3]) + " " + MONTHS[Number(m[2]) - 1] + " " + m[1] : iso; }
+
+/* SHA-256 (used to sign saved progress so edits made outside the app can be noticed) */
+function sha256(ascii) {
+  function rr(v, a) { return (v >>> a) | (v << (32 - a)); }
+  var mathPow = Math.pow, maxWord = mathPow(2, 32), lengthProperty = "length", i, j, result = "";
+  var words = [], asciiBitLength = ascii[lengthProperty] * 8;
+  var hash = sha256.h = sha256.h || [], k = sha256.k = sha256.k || [], primeCounter = k[lengthProperty];
+  var isComposite = {};
+  for (var candidate = 2; primeCounter < 64; candidate++) {
+    if (!isComposite[candidate]) {
+      for (i = 0; i < 313; i += candidate) isComposite[i] = candidate;
+      hash[primeCounter] = (mathPow(candidate, 0.5) * maxWord) | 0;
+      k[primeCounter++] = (mathPow(candidate, 1 / 3) * maxWord) | 0;
+    }
+  }
+  ascii += "\x80";
+  while (ascii[lengthProperty] % 64 - 56) ascii += "\x00";
+  for (i = 0; i < ascii[lengthProperty]; i++) {
+    j = ascii.charCodeAt(i);
+    if (j >> 8) return "";
+    words[i >> 2] |= j << ((3 - i) % 4) * 8;
+  }
+  words[words[lengthProperty]] = ((asciiBitLength / maxWord) | 0);
+  words[words[lengthProperty]] = (asciiBitLength);
+  for (j = 0; j < words[lengthProperty];) {
+    var w = words.slice(j, j += 16), oldHash = hash;
+    hash = hash.slice(0, 8);
+    for (i = 0; i < 64; i++) {
+      var w15 = w[i - 15], w2 = w[i - 2], a = hash[0], e = hash[4];
+      var temp1 = hash[7] + (rr(e, 6) ^ rr(e, 11) ^ rr(e, 25)) + ((e & hash[5]) ^ ((~e) & hash[6])) + k[i] +
+        (w[i] = (i < 16) ? w[i] : (w[i - 16] + (rr(w15, 7) ^ rr(w15, 18) ^ (w15 >>> 3)) + w[i - 7] + (rr(w2, 17) ^ rr(w2, 19) ^ (w2 >>> 10)) | 0));
+      var temp2 = (rr(a, 2) ^ rr(a, 13) ^ rr(a, 22)) + ((a & hash[1]) ^ (a & hash[2]) ^ (hash[1] & hash[2]));
+      hash = [(temp1 + temp2) | 0].concat(hash);
+      hash[4] = (hash[4] + temp1) | 0;
+    }
+    for (i = 0; i < 8; i++) hash[i] = (hash[i] + oldHash[i]) | 0;
+  }
+  for (i = 0; i < 8; i++) for (j = 3; j + 1; j--) { var b = (hash[i] >> (j * 8)) & 255; result += ((b < 16) ? 0 : "") + b.toString(16); }
+  return result;
+}
+function signText(text) { return sha256(unescape(encodeURIComponent(SALT + text))); }
 
 /* ===================== state + storage ===================== */
 function blank() { return { v: 1, created: Date.now(), log: [], units: {}, cards: {}, secs: {}, faded: {}, notes: "", lastBackup: 0 }; }
 let S = blank();
-let storageOK = true;
-let skippedOnLoad = 0;
-
+let storageOK = true, skippedOnLoad = 0;
+let integrity = "new";                     // new | ok | legacy | edited
 function num(x) { return typeof x === "number" && isFinite(x) ? x : null; }
+const EMPTY_PREP = () => ({ read: false, predict: false, faded: false, explain: false });
 
-/* Validates untrusted data (localStorage or pasted import). Returns a clean state object. */
+/* Checks the signature on a parsed backup/storage object. Returns "ok", "none" or "edited". */
+function checkSig(raw) {
+  if (!raw || typeof raw !== "object" || typeof raw.sig !== "string") return "none";
+  const rest = Object.assign({}, raw); delete rest.sig;
+  return signText(JSON.stringify(rest)) === raw.sig ? "ok" : "edited";
+}
+/* Cleans untrusted data (storage or import). Returns a clean state object. */
 function sanitize(o) {
-  if (!o || typeof o !== "object" || o.v !== 1) throw new Error("This is not Lean-Dash progress data (expected version 1).");
+  if (!o || typeof o !== "object" || o.v !== 1) throw new Error("This is not Learn Lean 4 progress data (expected version 1).");
   const s = blank(); let skipped = 0;
   s.created = num(o.created) || Date.now();
-  const confs = [null, "sure", "unsure", "guess"], kinds = ["quiz", "review", "faded"];
+  const confs = [null, "sure", "unsure", "guess"], kinds = ["quiz", "review", "faded", "predict"];
   if (Array.isArray(o.log)) for (const e of o.log) {
     if (!e || typeof e !== "object" || !kinds.includes(e.kind) || !confs.includes(e.conf === undefined ? null : e.conf) ||
         num(e.t) === null || typeof e.ok !== "boolean" || typeof e.u !== "string" || !UMAP[e.u] || typeof e.q !== "string") { skipped++; continue; }
-    if (e.kind !== "faded" && !QMAP[e.q]) { skipped++; continue; }
+    if ((e.kind === "quiz" || e.kind === "review") && !knownQ(e.q)) { skipped++; continue; }
     const ent = { t: e.t, u: e.u, q: e.q, kind: e.kind, ok: e.ok, conf: e.conf || null, ms: num(e.ms) === null ? null : Math.max(0, Math.min(e.ms, 600000)) };
     if (e.kind === "faded") ent.first = e.first === true;
+    if (typeof e.fix === "string" && e.fix) ent.fix = e.fix.slice(0, 300);
     s.log.push(ent);
   }
   s.log = s.log.slice(-LOG_CAP);
   if (o.units && typeof o.units === "object") for (const id of Object.keys(UMAP)) {
     const x = o.units[id]; if (!x || typeof x !== "object") continue;
     const hist = (Array.isArray(x.history) ? x.history : []).filter(a => a && num(a.t) !== null && num(a.right) !== null && num(a.total) !== null && a.total > 0 && a.right >= 0 && a.right <= a.total)
-      .map(a => ({ t: a.t, right: Math.floor(a.right), total: Math.floor(a.total) })).slice(-30);
-    s.units[id] = { best: Math.max(0, Math.min(100, num(x.best) || 0)), mastered: x.mastered === true, attempts: Math.max(0, Math.floor(num(x.attempts) || 0)), practice: x.practice === true, history: hist };
+      .map(a => { const sc = num(a.score); return { t: a.t, right: Math.floor(a.right), total: Math.floor(a.total), score: sc === null ? pct(a.right, a.total) : Math.max(0, Math.min(100, Math.round(sc))) }; }).slice(-30);
+    const best = Math.max(0, Math.min(100, num(x.best) || 0));
+    const backed = hist.length ? hist.some(a => a.score >= PASS_PCT) : best >= PASS_PCT;      // mastery must be backed by a passing attempt
+    const prep = EMPTY_PREP(); if (x.prep && typeof x.prep === "object") Object.keys(prep).forEach(k => { prep[k] = x.prep[k] === true; });
+    const ex = x.explain && typeof x.explain === "object" && typeof x.explain.text === "string" ? { text: x.explain.text.slice(0, 1500), rating: ["covered", "partly", "missed"].includes(x.explain.rating) ? x.explain.rating : "partly", t: num(x.explain.t) || 0 } : null;
+    s.units[id] = { best, mastered: x.mastered === true && backed, attempts: Math.max(0, Math.floor(num(x.attempts) || 0)), practice: x.practice === true, history: hist, prep, explain: ex };
   }
-  if (o.cards && typeof o.cards === "object") for (const id of Object.keys(QMAP)) {
+  if (o.cards && typeof o.cards === "object") for (const id of Object.keys(o.cards)) {
+    if (!knownQ(id)) continue;
     const c = o.cards[id]; if (!c || typeof c !== "object") continue;
     const box = Math.floor(num(c.box) || 0), due = num(c.due);
     if (box >= 1 && box <= 5 && due !== null) s.cards[id] = { box, due };
@@ -234,22 +315,35 @@ function sanitize(o) {
 function load() {
   try {
     const raw = localStorage.getItem(KEY);
-    if (raw) { S = sanitize(JSON.parse(raw)); skippedOnLoad = S._skipped || 0; delete S._skipped; }
-  } catch (e) { /* unreadable or blocked: start fresh, page still works */ if (e && e.name !== "SyntaxError" && !/Lean-Dash/.test(e.message || "")) storageOK = false; }
+    if (raw) {
+      const parsed = JSON.parse(raw), sig = checkSig(parsed);
+      integrity = sig === "ok" ? "ok" : sig === "edited" ? "edited" : "legacy";
+      S = sanitize(parsed); skippedOnLoad = S._skipped || 0; delete S._skipped;
+    }
+  } catch (e) { if (e && e.name !== "SyntaxError" && !/Learn Lean 4/.test(e.message || "")) storageOK = false; }
 }
 let lastSave = 0;
 function save() {
   S.log = S.log.slice(-LOG_CAP);
-  try { localStorage.setItem(KEY, JSON.stringify(S)); lastSave = Date.now(); }
-  catch (e) { storageOK = false; }
+  try {
+    const o = Object.assign({}, S); delete o.sig;
+    o.sig = signText(JSON.stringify(o));
+    localStorage.setItem(KEY, JSON.stringify(o)); lastSave = Date.now();
+    if (integrity === "new" || integrity === "legacy") integrity = "ok";
+  } catch (e) { storageOK = false; }
 }
-function unitState(id) { const u = S.units[id] || (S.units[id] = { best: 0, mastered: false, attempts: 0, practice: false, history: [] }); if (!u.history) u.history = []; return u; }
+function unitState(id) {
+  const u = S.units[id] || (S.units[id] = { best: 0, mastered: false, attempts: 0, practice: false, history: [], prep: EMPTY_PREP(), explain: null });
+  if (!u.history) u.history = []; if (!u.prep) u.prep = EMPTY_PREP(); if (u.explain === undefined) u.explain = null;
+  return u;
+}
 function isMastered(u) { return !!(S.units[u.id] && S.units[u.id].mastered); }
 function unitStatus(i) {
   if (isMastered(UNITS[i])) return "mastered";
   if (i === 0 || isMastered(UNITS[i - 1])) return "open";
   return "locked";
 }
+function isAnswer(e) { return e.kind === "quiz" || e.kind === "review"; }
 
 /* ===================== spaced review (Leitner) ===================== */
 function recordCard(qid, ok, isReview) {
@@ -258,12 +352,17 @@ function recordCard(qid, ok, isReview) {
   if (!ok) { c.box = 1; c.due = addDays(now, BOXES[0]); return; }
   if (isReview) { c.box = Math.min(5, c.box + 1); c.due = addDays(now, BOXES[c.box - 1]); }
 }
-function dueIds() { const now = Date.now(); return Object.keys(S.cards).filter(id => S.cards[id].due <= now); }
+function dueIds() { const now = Date.now(); return Object.keys(S.cards).filter(id => S.cards[id].due <= now && knownQ(id)); }
 function boxCounts() { const b = [0, 0, 0, 0, 0]; Object.values(S.cards).forEach(c => { b[c.box - 1]++; }); return b; }
+function buildItem(id) {                   // a review card -> something the question runner can ask
+  const g = GENMAP[id];
+  if (g) return { q: genBuild(g, R), u: UMAP[g.unit] };
+  return { q: QMAP[id].q, u: QMAP[id].u };
+}
 
 /* ===================== adaptive pace ===================== */
 function paceInfo() {
-  const a = S.log.filter(e => e.kind !== "faded").slice(-PACE.window);
+  const a = S.log.filter(isAnswer).slice(-PACE.window);
   const n = a.length, right = a.filter(e => e.ok).length;
   let mode = "steady";
   if (n >= PACE.supportMinAnswers && right * 100 < PACE.supportBelowPct * n) mode = "support";
@@ -271,9 +370,9 @@ function paceInfo() {
   return { mode, n, right, acc: n ? Math.round(100 * right / n) : null };
 }
 const PACE_TEXT = {
-  steady: "Steady: normal steps and the normal quiz.",
-  support: "Support: smaller steps (explanations appear one idea at a time) and key ideas are shown as hints on every question.",
-  challenge: "Challenge: each unit quiz also includes its extra challenge question."
+  steady: "Normal steps and the normal quiz.",
+  support: "Smaller steps: explanations appear one idea at a time, and key ideas are shown above every question.",
+  challenge: "Each quiz also includes the unit's extra challenge question."
 };
 function planLine() {
   const due = dueIds().length;
@@ -282,7 +381,7 @@ function planLine() {
   if (due) parts.push("Do your " + due + " due review card" + (due === 1 ? "" : "s") + " first.");
   else parts.push("No reviews are due.");
   if (nextIdx >= 0) parts.push("Then study Unit " + UNITS[nextIdx].n + ": " + UNITS[nextIdx].title + ".");
-  else parts.push("All units are mastered. Keep your reviews going.");
+  else parts.push("Every unit is mastered. Keep your reviews going.");
   return parts.join(" ");
 }
 
@@ -302,7 +401,7 @@ document.addEventListener("visibilitychange", () => { lastTick = Date.now(); if 
 addEventListener("pagehide", save);
 function updateToday() {
   const m = Math.floor((S.secs[dayKey(Date.now())] || 0) / 60);
-  const e = document.getElementById("today"); if (e) e.textContent = "Today: " + m + " min active";
+  const e = document.getElementById("today"); if (e) e.textContent = "Today: " + m + " min of study";
 }
 
 /* ===================== layout / routing ===================== */
@@ -313,11 +412,12 @@ function renderNav() {
   const due = dueIds().length;
   const active = currentRoute === "unit" ? "map" : currentRoute;
   NAV.forEach(([r, label]) => {
-    const a = h("a", { href: "#/" + r }, label);
-    if (r === "review" && due) a.append(h("span", { class: "pill", title: due + " cards due" }, String(due)));
+    const a = h("a", { href: "#/" + r }, label + (r === "review" && due ? " (" + due + ")" : ""));
     if (r === active) a.setAttribute("aria-current", "page");
     nav.append(a);
   });
+  const f = document.getElementById("foot");
+  if (f) f.textContent = "Learn Lean 4. Last updated " + prettyDate(BUILT) + ".";
 }
 const ui = { unit: null };
 function route() {
@@ -326,7 +426,7 @@ function route() {
   if (r === "unit" && !(UMAP[parts[1]] && unitStatus(UNITS.indexOf(UMAP[parts[1]])) !== "locked")) { r = "map"; }
   if (!["start", "map", "unit", "progress", "review", "report", "glossary", "method", "sources", "data"].includes(r)) r = "map";
   const wanted = r === "unit" ? "#/unit/" + parts[1] : "#/" + r;
-  if (location.hash !== wanted) { history.replaceState(null, "", wanted); }   // fix the address bar if we redirected
+  if (location.hash !== wanted) { history.replaceState(null, "", wanted); }
   currentRoute = r;
   renderNav(); updateToday();
   const app = document.getElementById("app"); app.replaceChildren();
@@ -350,72 +450,83 @@ function route() {
 }
 addEventListener("hashchange", route);
 
-/* ===================== VIEW: course map ===================== */
+/* ===================== shared pieces ===================== */
 function paceBanner() {
   const p = paceInfo();
-  return h("div", { class: "banner " + (p.mode === "steady" ? "" : p.mode) },
-    h("b", null, "Pace: " + p.mode),
-    p.acc === null ? " (no answers yet). " : " (" + p.right + "/" + p.n + " correct in your last " + p.n + " answer" + (p.n === 1 ? "" : "s") + ", " + p.acc + "%). ",
+  return h("div", { class: "note mode " + (p.mode === "challenge" ? "challenge" : p.mode === "steady" ? "" : "support") },
+    h("b", null, "Pace: " + p.mode + ". "),
+    p.acc === null ? "No answers yet. " : "Your last " + p.n + " answer" + (p.n === 1 ? "" : "s") + ": " + p.right + " right (" + p.acc + "%). ",
     PACE_TEXT[p.mode]);
 }
+function integrityNote() {
+  return integrity === "edited"
+    ? h("div", { class: "warn" }, h("b", null, "This progress was changed outside the app. "), "The saved signature doesn't match, so these scores can't be verified. If that wasn't you, restore a backup file. The weekly report will say the data is unverified.")
+    : null;
+}
+function termsList(u) {
+  const dl = h("dl", { class: "terms" });
+  u.terms.forEach(([t, d]) => { dl.append(h("dt", { html: t }), h("dd", { html: d })); });
+  return dl;
+}
+
+/* ===================== VIEW: course map ===================== */
 function viewMap(app) {
-  app.append(h("h1", null, "Lean 4 for blockchain"));
-  app.append(h("p", { class: "muted" }, "First-year university level. Ethereum (Solidity, the EVM) and Solana (Rust) are used as the running examples."));
-  if (!storageOK) app.append(h("div", { class: "warn" }, "Your browser is blocking saved progress for this page, so nothing will be remembered after you close it. Use Save / restore to copy your progress out as text."));
-  if (!S.log.length) app.append(h("div", { class: "banner" }, h("b", null, "New here? "), "Read ", h("a", { href: "#/start" }, "Start here"), " first. It explains how everything works, step by step. Then begin with Unit 0, which has no coding."));
-  if (S.log.length >= 10 && Date.now() - S.lastBackup > 7 * DAY) app.append(h("div", { class: "warn" }, "You have not saved a backup file in the last 7 days. Go to ", h("a", { href: "#/data" }, "Backup"), " and press Save backup file. It takes one click."));
+  app.append(h("h1", null, "Lean 4 through blockchain examples"));
+  app.append(h("p", { class: "muted" }, "First-year level. Ethereum (Solidity, the EVM) and Solana (Rust) supply the examples."));
+  if (!storageOK) app.append(h("div", { class: "warn" }, "Your browser is blocking saved progress for this page, so nothing will be remembered once you close it. Use Backup to copy your progress out."));
   if (skippedOnLoad) app.append(h("div", { class: "warn" }, skippedOnLoad + " damaged progress entries were skipped when loading."));
-  app.append(h("div", { class: "card" }, h("b", null, "Today's plan: "), planLine()));
+  const inote = integrityNote(); if (inote) app.append(inote);
+  if (!S.log.length) app.append(h("div", { class: "note todo" }, h("b", null, "First time here? "), "Read ", h("a", { href: "#/start" }, "Start here"), " first. It explains how everything works. Then begin with Unit 0, which has no coding."));
+  if (S.log.length >= 10 && Date.now() - S.lastBackup > 7 * DAY) app.append(h("div", { class: "warn" }, "You haven't saved a backup file in the last 7 days. Go to ", h("a", { href: "#/data" }, "Backup"), " and press Save backup file. It takes one click. Then copy the file into your vault."));
+  app.append(h("div", { class: "card" }, h("b", null, "Today's plan. "), planLine()));
   app.append(paceBanner());
   const ol = h("ol", { class: "chain", "aria-label": "Units" });
   UNITS.forEach((u, i) => {
     const st = unitStatus(i), best = (S.units[u.id] && S.units[u.id].best) || 0;
-    const label = st === "mastered" ? "✓ Mastered" : st === "open" ? "Open" : "🔒 Locked";
+    const label = st === "mastered" ? "✓ Mastered" : st === "open" ? "Open" : "Locked";
     const inner = [
       h("span", { class: "n" }, "Unit " + u.n),
       h("span", { class: "t" }, u.title),
       h("span", { class: "st" }, label),
       h("div", { class: "bar", role: "progressbar", "aria-valuemin": "0", "aria-valuemax": "100", "aria-valuenow": String(best), "aria-label": "Best quiz score" }, h("i", { style: "width:" + best + "%" }), h("b", { title: "80% needed" })),
-      h("span", { class: "barlabel" }, "Best: " + best + "% (need " + PASS_PCT + "%)")
+      h("span", { class: "barlabel" }, "Best " + best + "% (need " + PASS_PCT + "%)")
     ];
-    const li = h("li", null, st === "locked"
+    ol.append(h("li", null, st === "locked"
       ? h("div", { class: "block locked", "aria-disabled": "true", title: "Master Unit " + (u.n - 1) + " to unlock" }, inner)
-      : h("a", { class: "block " + st, href: "#/unit/" + u.id }, inner));
-    ol.append(li);
+      : h("a", { class: "block " + st, href: "#/unit/" + u.id }, inner)));
   });
   app.append(ol);
-  app.append(h("details", { class: "card" }, h("summary", null, "How this dashboard works"),
-    h("ul", null,
-      h("li", null, "Work through a unit in order: goals, explanation, worked example, bridge to Solidity/Rust, fill-the-blank, quiz, practice in VS Code."),
-      h("li", null, "Score " + PASS_PCT + "% or more on a unit quiz to master it and unlock the next unit. Below that you get correctives, then a retake in a new order."),
-      h("li", null, "Every question you answer becomes a review card. Wrong answers go back to box 1. Boxes repeat after " + BOXES.join(", ") + " days."),
-      h("li", null, "The pace mode looks at your last " + PACE.window + " answers. Support is below " + PACE.supportBelowPct + "% (after at least " + PACE.supportMinAnswers + " answers). Challenge is " + PACE.challengeAtPct + "% or more (after at least " + PACE.challengeMinAnswers + " answers)."),
-      h("li", null, "Time only counts while this tab is visible and you have touched the page in the last 2 minutes."),
-      h("li", null, "Once a week open Weekly report, add your notes, press Copy and paste it to Claude."))));
 }
 
 /* ===================== question runner (quiz + review) ===================== */
+function creditFor(ok, conf, ms, q, kind) {
+  if (!ok) return { credit: 0, why: "" };
+  if (conf === "guess") return { credit: 0.5, why: "Counted as half, because you marked it Guessing." };
+  if (kind === "quiz" && q.type !== "typed" && ms < RUSH_MS) return { credit: 0.5, why: "Counted as half, because it took under " + Math.round(RUSH_MS / 1000) + " seconds. Read the whole question before you answer." };
+  return { credit: 1, why: "" };
+}
 function runQuestions(mount, items, kind, onFinish, opts) {
   opts = opts || {};
   let i = 0; const results = [];
   function ask() {
-    const it = items[i], q = it.q;
-    let picked = null, conf = null; const t0 = Date.now();
+    const it = items[i], q = it.q, typed = q.type === "typed";
+    const perm = typed ? null : shuffle(q.options.map((_, k) => k));       // options are shown in a new order every time
+    let picked = null, conf = null, typedVal = ""; const t0 = Date.now();
+    if (window.__LEAN_TEST) window.__expected = () => typed ? { type: "typed", answer: q.answer } : { type: "mc", index: perm.indexOf(q.a), n: perm.length, perm: perm.slice(), id: q.id };
     mount.replaceChildren();
     const form = h("section", { class: "card", "aria-label": "Question " + (i + 1) + " of " + items.length });
-    form.append(h("div", { class: "tagline" }, (kind === "review" ? "Review · " : "") + "Question " + (i + 1) + " of " + items.length +
-      (kind === "review" ? " · Unit " + it.u.n + ": " + it.u.title : "")));
-    if (opts.keyIdeas) {
-      form.append(h("div", { class: "banner support" }, h("b", null, "Key ideas (support mode) · concept: " + tagName(q.tag)),
-        h("ul", null, it.u.goals.map(g => h("li", null, g)))));
-    }
+    form.append(h("div", { class: "tagline" }, (kind === "review" ? "Review. " : "") + "Question " + (i + 1) + " of " + items.length + (kind === "review" ? ". Unit " + it.u.n + ": " + it.u.title : "")));
+    if (opts.keyIdeas) form.append(h("div", { class: "note mode support" }, h("b", null, "Key ideas for this unit (concept: " + tagName(q.tag) + ")"), h("ul", null, it.u.goals.map(g => h("li", null, g)))));
     const fs = h("fieldset", null, h("legend", { html: q.q }));
     if (q.code) fs.append(h("pre", null, q.code));
     const submit = h("button", { disabled: true, onclick: doSubmit }, "Check my answer");
-    const upd = () => { submit.disabled = !(picked !== null && conf !== null); };
-    q.options.forEach((o, k) => {
-      fs.append(h("label", { class: "opt" }, h("input", { type: "radio", name: "opt", value: String(k), onchange: () => { picked = k; upd(); } }), h("span", { html: o })));
-    });
+    const upd = () => { submit.disabled = !((typed ? typedVal.trim().length > 0 : picked !== null) && conf !== null); };
+    if (typed) {
+      fs.append(h("input", { type: "text", name: "typed", autocomplete: "off", autocapitalize: "off", spellcheck: "false", "aria-label": "Your answer", placeholder: q.hint || "", oninput: ev => { typedVal = ev.target.value; upd(); } }));
+      fs.append(h("p", { class: "muted ui", style: "font-size:.8rem" }, "Type what Lean would print. Spaces and capital letters don't matter."));
+    } else {
+      perm.forEach((orig, pos) => fs.append(h("label", { class: "opt" }, h("input", { type: "radio", name: "opt", value: String(pos), onchange: () => { picked = pos; upd(); } }), h("span", { html: q.options[orig] }))));
+    }
     form.append(fs);
     const cf = h("fieldset", null, h("legend", null, "How sure are you? (choose before you check)"));
     const row = h("div", { class: "conf" });
@@ -425,54 +536,73 @@ function runQuestions(mount, items, kind, onFinish, opts) {
     mount.append(form);
 
     function doSubmit() {
-      const ok = picked === q.a; const ms = Math.min(Date.now() - t0, 600000);
+      const ok = typed ? normAns(typedVal) === normAns(q.answer) : perm[picked] === q.a;
+      const ms = Math.min(Date.now() - t0, 600000);
+      const cr = creditFor(ok, conf, ms, q, kind);
       const before = S.cards[q.id] ? S.cards[q.id].box : null;
-      S.log.push({ t: Date.now(), u: it.u.id, q: q.id, kind, ok, conf, ms });
+      const entry = { t: Date.now(), u: it.u.id, q: q.id, kind, ok, conf, ms };
+      S.log.push(entry);
       recordCard(q.id, ok, kind === "review");
       save(); renderNav();
-      results.push({ it, ok, conf, picked });
-      showFeedback(ok, before);
+      const res = { it, ok, conf, credit: cr.credit, creditNote: cr.why, fix: "" };
+      results.push(res);
+      showFeedback(res, entry, before);
     }
-    function showFeedback(ok, before) {
+    function showFeedback(res, entry, before) {
+      const ok = res.ok;
       mount.replaceChildren();
       const card = h("section", { class: "card", "aria-label": "Answer feedback" });
-      card.append(h("div", { class: "tagline" }, (kind === "review" ? "Review · " : "") + "Question " + (i + 1) + " of " + items.length));
+      card.append(h("div", { class: "tagline" }, (kind === "review" ? "Review. " : "") + "Question " + (i + 1) + " of " + items.length));
       card.append(h("p", { html: "<b>" + q.q + "</b>" }));
       if (q.code) card.append(h("pre", null, q.code));
-      q.options.forEach((o, k) => {
-        const cls = k === q.a ? "opt correct" : k === picked ? "opt wrong" : "opt";
-        const mark = k === q.a ? "✓ correct answer" : k === picked ? "✗ your answer" : "";
-        card.append(h("div", { class: cls }, h("span", { html: o }), mark && h("span", { class: "mark" }, mark)));
-      });
+      let whyPicked = "";
+      if (typed) {
+        card.append(h("p", null, h("b", null, "You typed: "), h("code", null, typedVal.trim())));
+        if (!ok) card.append(h("p", null, h("b", null, "Lean prints: "), h("code", null, q.answer)));
+      } else {
+        perm.forEach((orig, pos) => {
+          const isRight = orig === q.a, isPicked = pos === picked;
+          card.append(h("div", { class: isRight ? "opt correct" : isPicked ? "opt wrong" : "opt" }, h("span", { html: q.options[orig] }), (isRight || isPicked) && h("span", { class: "mark" }, isRight ? "✓ correct answer" : "✗ your answer")));
+        });
+        if (!ok && q.optWhy && q.optWhy[perm[picked]]) whyPicked = q.optWhy[perm[picked]];
+      }
       const surewrong = !ok && conf === "sure";
       const fb = h("div", { class: "fb " + (ok ? "ok" : "no") + (surewrong ? " sure-wrong" : ""), role: "status", tabindex: "-1" },
-        h("b", null, ok ? "✓ Correct. " : "✗ Not quite. "),
-        h("span", { html: q.why }));
-      if (surewrong) fb.append(h("p", null, h("b", null, "You were sure but wrong."), " Those are the most useful mistakes to look at closely. This one is flagged in your weekly report."));
-      if (ok && conf === "guess") fb.append(h("p", null, "Right, but you marked it as a guess. Re-read the explanation so it sticks."));
+        h("b", null, ok ? "Right. " : "Not quite. "), h("span", { html: q.why }));
+      if (whyPicked) fb.append(h("p", null, h("b", null, "Why that answer is tempting: "), whyPicked));
+      if (surewrong) fb.append(h("p", null, h("b", null, "You were sure, and it was wrong."), " Those are the most useful mistakes to study. This one is flagged in your weekly report."));
+      if (res.creditNote) fb.append(h("p", null, res.creditNote));
       if (kind === "review") {
         const c = S.cards[q.id];
-        fb.append(h("p", { class: "muted" }, ok
-          ? "Card moved from box " + before + " to box " + c.box + ". Next review in " + BOXES[c.box - 1] + " day" + (BOXES[c.box - 1] === 1 ? "" : "s") + "."
-          : "Card goes back to box 1. You will see it again tomorrow."));
+        fb.append(h("p", { class: "muted" }, ok ? "Card moved from box " + before + " to box " + c.box + ". Next review in " + BOXES[c.box - 1] + " day" + (BOXES[c.box - 1] === 1 ? "" : "s") + "."
+                                              : "Card goes back to box 1. You'll see it again tomorrow."));
       }
       card.append(fb);
       const last = i === items.length - 1;
-      card.append(h("button", { onclick: () => { i++; if (i < items.length) ask(); else onFinish(results); } }, last ? "See result" : "Next question"));
+      const next = h("button", { disabled: !ok, onclick: () => { if (!ok) { entry.fix = fixBox.value.trim().slice(0, 300); res.fix = entry.fix; save(); } i++; if (i < items.length) ask(); else onFinish(results); } }, last ? "See result" : "Next question");
+      let fixBox = { value: "" };
+      if (!ok) {
+        card.append(h("label", { class: "label", for: "fixnote" }, "Before you go on: in a sentence, what went wrong, or why is the right answer right?"));
+        fixBox = h("textarea", { id: "fixnote", class: "prose", rows: "2", maxlength: "300", placeholder: "Write it in your own words", oninput: () => { next.disabled = fixBox.value.trim().length < MIN_FIX; } });
+        card.append(fixBox);
+        card.append(h("p", { class: "muted ui", style: "font-size:.8rem" }, "At least " + MIN_FIX + " characters. Putting the correction into words is what makes it stick."));
+      }
+      card.append(next);
       mount.append(card);
-      fb.focus({ preventScroll: true });
+      (ok ? fb : fixBox).focus({ preventScroll: true });
     }
   }
   ask();
 }
 
 /* ===================== VIEW: unit ===================== */
-const STEPS = [["goals", "1 Goals"], ["explain", "2 Explain"], ["worked", "3 Worked example"], ["bridge", "4 Solidity / Rust bridge"], ["faded", "5 Fill the blank"], ["quiz", "6 Mastery quiz"], ["practice", "7 Practice"]];
+const STEPS = [["goals", "1 Goals"], ["explain", "2 Explain"], ["worked", "3 Worked example"], ["bridge", "4 Solidity and Rust"], ["faded", "5 Fill the blank"], ["quiz", "6 Mastery quiz"], ["practice", "7 Practice"]];
+const PREP_LABELS = [["read", "Read the explanation", "explain"], ["predict", "Predict the worked example", "worked"], ["faded", "Get the fill-in-the-blank right", "faded"], ["explain", "Explain it back in your own words", "worked"]];
 function viewUnit(app, u, fresh) {
-  if (fresh || !ui.unit || ui.unit.id !== u.id) ui.unit = { id: u.id, step: "goals", reveal: false, guess: "", shown: null };
-  const st = ui.unit;
+  if (fresh || !ui.unit || ui.unit.id !== u.id) ui.unit = { id: u.id, step: "goals", reveal: false, guess: "", shown: null, sx: "", sxModel: false };
+  const st = ui.unit, us = unitState(u.id);
   const idx = UNITS.indexOf(u);
-  app.append(h("p", null, h("a", { href: "#/map" }, "← Course map")));
+  app.append(h("p", { class: "ui", style: "font-size:.85rem" }, h("a", { href: "#/map" }, "← Course map")));
   app.append(h("h1", null, "Unit " + u.n + ": " + u.title));
   app.append(h("p", { class: "muted" }, u.hook));
   const stepper = h("div", { class: "stepper", role: "group", "aria-label": "Unit steps" });
@@ -485,12 +615,11 @@ function viewUnit(app, u, fresh) {
   const body = h("div"); app.append(body);
   const nav = h("div"); app.append(nav);
   function go(k) { st.step = k; redraw(); window.scrollTo(0, 0); }
-  function redraw() {
-    app.replaceChildren(); viewUnit(app, u, false);
-  }
+  function redraw() { app.replaceChildren(); viewUnit(app, u, false); }
   const pace = paceInfo().mode;
   const si = STEPS.findIndex(s => s[0] === st.step);
-  body.append(h("div", { class: "tipbox", html: STEP_HELP[st.step] }));
+  body.append(h("div", { class: "note todo", html: STEP_HELP[st.step] }));
+
   if (st.step === "goals") {
     body.append(h("div", { class: "card" }, h("h2", null, "By the end of this unit you can:"), h("ul", null, u.goals.map(g => h("li", null, g)))));
     if (u.terms && u.terms.length) body.append(h("div", { class: "card" }, h("h2", null, "Words to know"), termsList(u)));
@@ -499,65 +628,55 @@ function viewUnit(app, u, fresh) {
     const tmp = document.createElement("div"); tmp.innerHTML = u.explain;
     const blocks = Array.from(tmp.children);
     if (st.shown === null) st.shown = pace === "support" ? 1 : blocks.length;
-    if (u.summary) body.append(h("div", { class: "summary", html: "<b>In short:</b> " + u.summary }));
+    if (u.summary) body.append(h("div", { class: "note short", html: "<b>In short.</b> " + u.summary }));
     const card = h("div", { class: "card explain" });
     blocks.slice(0, st.shown).forEach(b => card.append(b));
     body.append(card);
-    if (st.shown >= blocks.length && u.terms && u.terms.length) body.append(h("details", { class: "card" }, h("summary", null, "Words to know in this unit"), termsList(u)));
     if (st.shown < blocks.length) {
-      body.append(h("p", { class: "muted" }, "Support mode: idea " + st.shown + " of " + blocks.length + "."));
+      body.append(h("p", { class: "muted ui", style: "font-size:.85rem" }, "Support mode: idea " + st.shown + " of " + blocks.length + "."));
       body.append(h("button", { onclick: () => { st.shown++; redraw(); } }, "Next idea"));
       body.append(h("button", { class: "secondary", onclick: () => { st.shown = blocks.length; redraw(); } }, "Show everything"));
+    } else {
+      if (u.terms && u.terms.length) body.append(h("details", { class: "card" }, h("summary", null, "Words to know in this unit"), termsList(u)));
+      body.append(us.prep.read
+        ? h("p", { class: "ui", style: "font-size:.9rem" }, h("span", { class: "m-ok" }, "✓ "), "You've read this unit's explanation.")
+        : h("button", { onclick: () => { us.prep.read = true; save(); redraw(); } }, "I've read this"));
     }
   } else if (st.step === "worked") {
-    const w = u.worked;
-    body.append(h("div", { class: "card" },
-      h("h2", null, "Worked example"),
-      h("p", null, "Read the code below and ", h("b", null, "predict the output first"), ". Write your guess, then reveal what real Lean printed."),
-      h("div", { class: "label-small" }, "Lean code"), h("pre", null, w.code),
-      h("label", { class: "label-small", for: "guess" }, "Your prediction"),
-      h("textarea", { id: "guess", rows: "4", placeholder: "What will Lean print for each #eval / #check?", oninput: ev => { st.guess = ev.target.value; }, value: st.guess }),
-      !st.reveal && h("button", { onclick: () => { st.reveal = true; redraw(); } }, "Reveal output and notes")));
-    if (st.reveal) {
-      body.append(h("div", { class: "card" },
-        h("div", { class: "label-small" }, "Real Lean output (Lean 4.36.0)"), h("pre", { class: "out" }, w.output),
-        st.guess.trim() && h("div", null, h("div", { class: "label-small" }, "Your prediction"), h("pre", null, st.guess)),
-        h("h3", null, "Line by line"), h("ul", null, w.notes.map(n => h("li", { html: n })))));
-    }
+    renderWorked(body, u, st, us, redraw);
   } else if (st.step === "bridge") {
-    body.append(h("div", { class: "card explain" }, h("h2", null, "Bridge to Solidity and Rust"), h("div", { html: u.bridge })));
+    body.append(h("div", { class: "card explain" }, h("h2", null, "Solidity and Rust"), h("div", { html: u.bridge })));
   } else if (st.step === "faded") {
     const f = u.faded, rec = (S.faded[u.id] = S.faded[u.id] || { first: null, tries: 0 });
-    const done = st.fadedDone === true;
+    const done = st.fadedDone === true || us.prep.faded;
     const card = h("div", { class: "card" }, h("h2", null, "Fill the blank"), h("p", { html: f.prompt }), h("pre", null, f.code));
     const fs = h("fieldset", null, h("legend", null, "Which option fills the blank (____)?"));
-    f.options.forEach((o, k) => {
-      const l = h("label", { class: "opt" + (done && k === f.answer ? " correct" : "") },
-        h("input", { type: "radio", name: "fd", value: String(k), disabled: done, onchange: () => { st.fpick = k; fbtn.disabled = false; } }), h("code", null, o));
-      fs.append(l);
+    const order = st.fadedOrder || (st.fadedOrder = shuffle(f.options.map((_, k) => k)));
+    order.forEach(k => {
+      fs.append(h("label", { class: "opt" + (done && k === f.answer ? " correct" : "") },
+        h("input", { type: "radio", name: "fd", value: String(k), disabled: done, onchange: () => { st.fpick = k; fbtn.disabled = false; } }), h("code", null, f.options[k])));
     });
     const fbtn = h("button", { disabled: true, onclick: () => {
       const ok = st.fpick === f.answer; const first = rec.tries === 0;
       rec.tries++; if (first) rec.first = ok;
       S.log.push({ t: Date.now(), u: u.id, q: u.id + "-faded", kind: "faded", ok, conf: null, ms: null, first });
-      save();
-      if (ok) st.fadedDone = true;
-      st.fmsg = ok ? { ok: true } : { ok: false }; redraw();
+      if (ok) { st.fadedDone = true; us.prep.faded = true; }
+      save(); st.fmsg = { ok }; redraw();
     } }, "Check");
     card.append(fs);
     if (!done) card.append(fbtn);
-    if (st.fmsg) card.append(h("div", { class: "fb " + (st.fmsg.ok ? "ok" : "no"), role: "status" },
-      h("b", null, st.fmsg.ok ? "✓ Correct. " : "✗ Not quite, try another option. "), st.fmsg.ok ? h("span", { html: f.why }) : "Re-read the worked example if you are unsure."));
+    if (st.fmsg || done) card.append(h("div", { class: "fb " + ((st.fmsg ? st.fmsg.ok : true) ? "ok" : "no"), role: "status" },
+      h("b", null, (st.fmsg ? st.fmsg.ok : true) ? "Right. " : "Not quite. Try another option. "), (st.fmsg ? st.fmsg.ok : true) ? h("span", { html: f.why }) : "Look back at the worked example if you're unsure."));
     body.append(card);
   } else if (st.step === "quiz") {
-    renderQuizStep(body, u, st, go);
+    renderQuizStep(body, u, st, us, go);
   } else if (st.step === "practice") {
-    const p = u.practice, us = unitState(u.id);
-    const card = h("div", { class: "card" }, h("h2", null, "Practice"), h("p", { html: p.task }), h("p", { class: "muted" }, "Lean Playground: ", link("live.lean-lang.org", "https://live.lean-lang.org/"), " (needs internet, nothing to install)."));
-    const det = h("details", null, h("summary", null, "Show expected result"), h("pre", { class: "out" }, p.expected));
+    const p = u.practice;
+    const card = h("div", { class: "card" }, h("h2", null, "Practice"), h("p", { html: p.task }), u.prelude && h("p", { class: "muted" }, "This needs the code in the \"Paste this first\" box on the worked example step."), h("p", { class: "muted" }, "Lean Playground: ", link("live.lean-lang.org", "https://live.lean-lang.org/"), " (needs internet, nothing to install)."));
+    const det = h("details", null, h("summary", null, "Show the expected result"), h("pre", { class: "out" }, p.expected));
     const cb = h("input", { type: "checkbox", id: "pdone", onchange: ev => { us.practice = ev.target.checked; save(); } });
     cb.checked = !!us.practice;
-    card.append(det, h("p", null, cb, h("label", { for: "pdone" }, " I have done this in VS Code")));
+    card.append(det, h("p", null, cb, h("label", { for: "pdone" }, " I've done this myself")));
     if (isMastered(u) && idx + 1 < UNITS.length) card.append(h("a", { class: "btn", href: "#/unit/" + UNITS[idx + 1].id }, "Go to Unit " + UNITS[idx + 1].n));
     body.append(card);
   }
@@ -567,33 +686,88 @@ function viewUnit(app, u, fresh) {
   }
 }
 
-function renderQuizStep(body, u, st, go) {
-  const us = unitState(u.id);
+/* Worked example: predict, compare line by line, then explain it back. */
+function renderWorked(body, u, st, us, redraw) {
+  const w = u.worked, outLines = w.output.split("\n");
+  if (u.prelude) body.append(h("div", { class: "card" }, h("h2", null, "Paste this first"),
+    h("p", null, "This example uses code from earlier units. If you try it yourself, paste this into the editor before the example."),
+    h("pre", null, u.prelude)));
+  const guessBox = h("textarea", { id: "guess", rows: Math.max(3, Math.min(8, outLines.length)), placeholder: "One line per answer, in the same order as the code", disabled: st.reveal, oninput: ev => { st.guess = ev.target.value; revealBtn.disabled = st.guess.trim().length < MIN_PREDICT; }, value: st.guess });
+  const revealBtn = h("button", { disabled: st.reveal || st.guess.trim().length < MIN_PREDICT, onclick: () => {
+    st.reveal = true;
+    const mine = st.guess.split("\n").map(x => x.trim()).filter(Boolean);
+    const matched = outLines.filter((l, k) => mine[k] !== undefined && normAns(mine[k]) === normAns(l)).length;
+    st.matched = matched;
+    S.log.push({ t: Date.now(), u: u.id, q: u.id + "-predict", kind: "predict", ok: matched === outLines.length, conf: null, ms: null });
+    us.prep.predict = true; save(); redraw();
+  } }, "Reveal Lean's output");
+  body.append(h("div", { class: "card" },
+    h("h2", null, "Worked example"),
+    h("p", null, "Read the code and ", h("b", null, "predict the output first"), ". Write your guess, one line per answer. You need to type something before you can reveal what Lean printed."),
+    h("div", { class: "label" }, "Lean code"), h("pre", null, w.code),
+    h("label", { class: "label", for: "guess" }, "Your prediction"), guessBox,
+    !st.reveal && revealBtn));
+  if (!st.reveal) return;
+  const mine = st.guess.split("\n").map(x => x.trim()).filter(Boolean);
+  st.matched = outLines.filter((l, k) => mine[k] !== undefined && normAns(mine[k]) === normAns(l)).length;
+  body.append(h("div", { class: "card" },
+    h("div", { class: "label" }, "Your prediction against real Lean 4.36.0 output"),
+    h("div", { class: "tbl" }, h("table", { class: "cmp" },
+      h("thead", null, h("tr", null, h("th", null, ""), h("th", null, "You wrote"), h("th", null, "Lean printed"))),
+      h("tbody", null, outLines.map((l, k) => { const m = mine[k] !== undefined && normAns(mine[k]) === normAns(l);
+        return h("tr", null, h("td", null, h("span", { class: m ? "m-ok" : "m-no" }, m ? "✓" : "✗")), h("td", null, h("code", null, mine[k] === undefined ? "(nothing)" : mine[k])), h("td", null, h("code", null, l))); })))),
+    h("p", null, "You matched " + st.matched + " of " + outLines.length + " lines. " + (st.matched === outLines.length ? "Every line." : "The ones you missed are the useful ones. The notes below say why each line comes out as it does.")),
+    h("h3", null, "Line by line"), h("ul", null, w.notes.map(n => h("li", { html: n })))));
+  // explain it back
+  const sx = u.selfx;
+  if (!sx) { us.prep.explain = true; return; }
+  const done = us.explain && us.prep.explain;
+  const card = h("div", { class: "card" }, h("h2", null, "Explain it back"), h("p", { html: sx.q }));
+  if (done && !st.sxModel) {
+    card.append(h("div", { class: "label" }, "Your answer"), h("p", null, us.explain.text), h("div", { class: "label" }, "Model answer"), h("p", { html: sx.model }), h("p", { class: "muted ui", style: "font-size:.85rem" }, "You rated yours: " + us.explain.rating + "."));
+  } else {
+    const ta = h("textarea", { class: "prose", rows: "4", placeholder: "Write it as if you were explaining to a friend", value: st.sx, oninput: ev => { st.sx = ev.target.value; show.disabled = st.sx.trim().length < MIN_EXPLAIN; } });
+    const show = h("button", { disabled: st.sx.trim().length < MIN_EXPLAIN, onclick: () => { st.sxModel = true; redraw(); } }, "Show the model answer");
+    card.append(ta, h("p", { class: "muted ui", style: "font-size:.8rem" }, "Write at least " + MIN_EXPLAIN + " characters before the model answer appears. Explaining in your own words shows you what you actually understand."));
+    if (!st.sxModel) card.append(show);
+    else {
+      card.append(h("div", { class: "label" }, "Model answer"), h("p", { html: sx.model }), h("p", null, "Be honest: how close was yours?"));
+      [["covered", "It covered the same ideas"], ["partly", "Partly"], ["missed", "I missed the main idea"]].forEach(([k, l]) =>
+        card.append(h("button", { class: k === "covered" ? "" : "secondary", onclick: () => { us.explain = { text: st.sx.trim(), rating: k, t: Date.now() }; us.prep.explain = true; st.sxModel = false; save(); redraw(); } }, l)));
+    }
+  }
+  body.append(card);
+}
+
+function renderQuizStep(body, u, st, us, go) {
   const mode = paceInfo().mode;
   const mount = h("div");
   function start() {
-    const qs = u.quiz.slice();
-    if (mode === "challenge") qs.push(u.challenge);
-    const ordered = us.attempts > 0 ? shuffle(qs) : qs;
-    const items = ordered.map(q => ({ q, u }));
+    const stat = u.quiz.map(q => ({ q: Object.assign({ type: "mc" }, q), u }));
+    if (mode === "challenge") stat.push({ q: Object.assign({ type: "mc" }, u.challenge), u });
+    const fams = shuffle(GENS.filter(g => g.unit === u.id));
+    const gens = []; for (let k = 0; k < Math.min(2, Math.max(fams.length, 0)); k++) gens.push({ q: genBuild(fams[k], R), u });
+    if (fams.length === 1) gens.push({ q: genBuild(fams[0], R), u });
+    const all = stat.concat(gens);
+    const items = us.attempts > 0 ? shuffle(all) : all;
     body.replaceChildren(mount);
     runQuestions(mount, items, "quiz", finish, { keyIdeas: mode === "support" });
   }
   function finish(results) {
-    const right = results.filter(r => r.ok).length, p = pct(right, results.length);
+    const right = results.filter(r => r.ok).length, pts = results.reduce((a, r) => a + r.credit, 0);
+    const score = Math.round(100 * pts / results.length), passed = pts * 100 >= PASS_PCT * results.length;
     const was = us.mastered;
-    us.attempts++; us.best = Math.max(us.best, p);
-    us.history.push({ t: Date.now(), right, total: results.length }); us.history = us.history.slice(-30);
-    const passed = p >= PASS_PCT;
+    us.attempts++; us.best = Math.max(us.best, score);
+    us.history.push({ t: Date.now(), right, total: results.length, score }); us.history = us.history.slice(-30);
     if (passed) us.mastered = true;
     save(); renderNav();
     mount.replaceChildren();
     const card = h("section", { class: "card", "aria-label": "Quiz result" });
-    card.append(h("h2", null, passed ? "✓ Unit mastered" : "Not there yet"));
-    card.append(h("p", null, "You scored " + right + " of " + results.length + " (" + p + "%). The gate is " + PASS_PCT + "%. Your best is " + us.best + "%."));
+    card.append(h("h2", null, passed ? "Unit mastered" : "Not there yet"));
+    card.append(h("p", null, "You got " + right + " of " + results.length + " right. After the credit rules your score is " + score + "%. You need " + PASS_PCT + "%. Your best is " + us.best + "%."));
     card.append(h("h3", null, "Your answers"));
     card.append(h("ul", { class: "marks" }, results.map((r, i) => h("li", null,
-      h("span", { class: r.ok ? "m-ok" : "m-no" }, r.ok ? "✓ Right" : "✗ Missed"), " · Question " + (i + 1) + " · " + tagName(r.it.q.tag) + " · you said: " + CONF_LABEL[r.conf]))));
+      h("span", { class: r.ok ? "m-ok" : "m-no" }, r.ok ? (r.credit < 1 ? "✓ Right, half credit" : "✓ Right") : "✗ Missed"), ". Question " + (i + 1) + ". " + tagName(r.it.q.tag) + ". You said: " + CONF_LABEL[r.conf] + "."))));
     card.append(h("p", { class: "muted" }, "All of this is saved. See ", h("a", { href: "#/progress" }, "My progress"), " for every attempt."));
     const idx = UNITS.indexOf(u);
     if (passed) {
@@ -603,28 +777,40 @@ function renderQuizStep(body, u, st, go) {
     } else {
       if (was) card.append(h("p", { class: "muted" }, "This unit stays mastered from an earlier pass."));
       const missed = results.filter(r => !r.ok);
-      card.append(h("h3", null, "Correctives: the questions you missed"));
+      card.append(h("h3", null, "What to go back over"));
       missed.forEach(r => {
         const q = r.it.q;
         card.append(h("div", { class: "card" },
           h("div", { html: "<b>" + q.q + "</b>" }), q.code && h("pre", null, q.code),
-          h("p", null, h("b", null, "Correct answer: "), h("span", { html: q.options[q.a] })),
+          h("p", null, h("b", null, "Answer: "), q.type === "typed" ? h("code", null, q.answer) : h("span", { html: q.options[q.a] })),
           h("p", { html: q.why }),
+          r.fix && h("p", null, h("b", null, "You wrote: "), r.fix),
           h("p", { class: "muted" }, "Concept: " + tagName(q.tag))));
       });
-      card.append(h("button", { class: "secondary", onclick: () => { st.reveal = true; go("worked"); } }, "Back to the worked example"));
+      card.append(h("button", { class: "secondary", onclick: () => { st.reveal = false; st.guess = ""; go("worked"); } }, "Back to the worked example"));
       card.append(h("button", { class: "secondary", onclick: () => go("explain") }, "Re-read the explanation"));
-      card.append(h("button", { onclick: () => { start(); } }, "Retake the quiz (new order)"));
+      card.append(h("button", { onclick: start }, "Retake with new questions"));
     }
     mount.append(card);
   }
+  const need = PREP_LABELS.filter(([k]) => !us.prep[k]);
+  const gated = !us.mastered && need.length > 0;
+  const total = u.quiz.length + (mode === "challenge" ? 1 : 0) + Math.min(2, GENS.some(g => g.unit === u.id) ? 2 : 0);
   const intro = h("div", { class: "card" },
     h("h2", null, "Mastery quiz"),
-    h("p", null, u.quiz.length + (mode === "challenge" ? 1 : 0) + " questions, one at a time. Before you check each answer, say how sure you are. You need " + PASS_PCT + "% to master the unit."),
+    h("p", null, total + " questions, one at a time. Some are multiple choice and some you type, and the numbers in the typed ones are different every time. Before each check you say how sure you are. You need " + PASS_PCT + "% to master the unit."),
+    h("p", { class: "muted" }, "Credit rules: a right answer marked Guessing counts half. So does a multiple-choice answer given in under " + Math.round(RUSH_MS / 1000) + " seconds. A wrong answer needs a one-sentence note about what went wrong before you continue."),
     mode === "challenge" && h("p", null, h("b", null, "Challenge pace: "), "this quiz includes the extra challenge question."),
     mode === "support" && h("p", null, h("b", null, "Support pace: "), "key ideas are shown above each question."),
-    us.attempts > 0 && h("p", { class: "muted" }, "Attempts so far: " + us.attempts + ". Best: " + us.best + "%. Questions will be shuffled."),
-    h("button", { onclick: start }, us.attempts > 0 ? "Start retake" : "Start quiz"));
+    us.attempts > 0 && h("p", { class: "muted" }, "Attempts so far: " + us.attempts + ". Best: " + us.best + "%. New questions and a new order every time."));
+  if (gated) {
+    intro.append(h("h3", null, "Before you can start"));
+    intro.append(h("ul", { class: "check" }, PREP_LABELS.map(([k, label, step]) => h("li", null,
+      h("span", { class: us.prep[k] ? "m-ok" : "m-no" }, us.prep[k] ? "✓ " : "○ "), label + " ", !us.prep[k] && h("a", { href: "#", onclick: ev => { ev.preventDefault(); go(step); } }, "(go there)")))));
+    intro.append(h("button", { disabled: true }, "Start quiz"));
+  } else {
+    intro.append(h("button", { onclick: start }, us.attempts > 0 ? "Start retake" : "Start quiz"));
+  }
   body.append(intro);
 }
 
@@ -636,29 +822,29 @@ function viewReview(app) {
     h("tbody", null, BOXES.map((d, i) => h("tr", null, h("td", null, "Box " + (i + 1)), h("td", null, d + (d === 1 ? " day" : " days")), h("td", null, String(counts[i]))))));
   const mount = h("div"); app.append(mount);
   if (!total) {
-    mount.append(h("div", { class: "card" }, h("p", null, "No review cards yet. Every question you answer in a unit quiz becomes a card. Start with Unit 1."), h("a", { class: "btn", href: "#/unit/u1" }, "Go to Unit 1")));
+    mount.append(h("div", { class: "card" }, h("p", null, "No review cards yet. Every question you answer in a unit quiz becomes a card. Start with Unit 0."), h("a", { class: "btn", href: "#/unit/u0" }, "Go to Unit 0")));
     return;
   }
   if (!due.length) {
     const next = Math.min(...Object.values(S.cards).map(c => c.due));
-    mount.append(h("div", { class: "card" }, h("h2", null, "Nothing due right now"), h("p", null, "You have " + total + " cards. The next one is due on " + dayKey(next) + "."), boxTable));
+    mount.append(h("div", { class: "card" }, h("h2", null, "Nothing due right now"), h("p", null, "You have " + total + " cards. The next one is due on " + prettyDate(dayKey(next)) + "."), h("div", { class: "tbl" }, boxTable)));
     return;
   }
-  const batch = shuffle(due).slice(0, REVIEW_BATCH);   // shuffled = interleaved across units
-  const intro = h("div", { class: "card" }, h("h2", null, due.length + " card" + (due.length === 1 ? "" : "s") + " due"),
-    h("p", null, "Cards from all units are mixed together on purpose (interleaving). This session has " + batch.length + (due.length > batch.length ? " of them; do another session afterwards." : ".")),
-    boxTable,
-    h("button", { onclick: begin }, "Start review"));
-  mount.append(intro);
+  const batch = shuffle(due).slice(0, REVIEW_BATCH);   // shuffled across units on purpose
+  mount.append(h("div", { class: "card" }, h("h2", null, due.length + " card" + (due.length === 1 ? "" : "s") + " due"),
+    h("p", null, "Cards from every unit are mixed together on purpose. This session has " + batch.length + (due.length > batch.length ? " of them. Do another session afterwards." : ".")),
+    h("p", { class: "muted" }, "Questions that came from a generator have new numbers each time, so you practise the skill and not one answer."),
+    h("div", { class: "tbl" }, boxTable),
+    h("button", { onclick: begin }, "Start review")));
   function begin() {
     mount.replaceChildren();
-    const items = batch.map(id => QMAP[id]);
+    const items = batch.map(buildItem);
     runQuestions(mount, items, "review", results => {
       const right = results.filter(r => r.ok).length;
       mount.replaceChildren(h("section", { class: "card" },
-        h("h2", null, "Review finished"), h("p", null, right + " of " + results.length + " correct (" + pct(right, results.length) + "%)."),
+        h("h2", null, "Review finished"), h("p", null, right + " of " + results.length + " right (" + pct(right, results.length) + "%)."),
         results.filter(r => !r.ok).length ? h("div", null, h("h3", null, "Missed (back to box 1)"),
-          h("ul", null, results.filter(r => !r.ok).map(r => h("li", null, h("a", { href: "#/unit/" + r.it.u.id }, "Unit " + r.it.u.n), " · " + tagName(r.it.q.tag))))) : h("p", null, "No misses. Nice."),
+          h("ul", null, results.filter(r => !r.ok).map(r => h("li", null, h("a", { href: "#/unit/" + r.it.u.id }, "Unit " + r.it.u.n), ". " + tagName(r.it.q.tag))))) : h("p", null, "No misses."),
         h("a", { class: "btn", href: "#/map" }, "Back to the course map")));
       renderNav();
     }, { keyIdeas: paceInfo().mode === "support" });
@@ -671,16 +857,17 @@ function buildReport() {
   const days = []; for (let k = 6; k >= 0; k--) days.push(dayKey(addDays(now, -k)));
   const from = startOfDay(addDays(now, -6));
   const inWin = S.log.filter(e => e.t >= from && e.t <= now + 1000);
-  const ans = inWin.filter(e => e.kind !== "faded");
+  const ans = inWin.filter(isAnswer);
   const right = ans.filter(e => e.ok).length;
   const mins = days.reduce((s, d) => s + (S.secs[d] || 0), 0) / 60;
   const active = days.filter(d => (S.secs[d] || 0) >= 60 || inWin.some(e => dayKey(e.t) === d));
   const p = paceInfo(), L = [];
   const d = new Date(now);
-  L.push("=== LEAN-DASH WEEKLY REPORT (v1) ===");
+  L.push("=== LEARN LEAN 4 WEEKLY REPORT (v1) ===");
   L.push("Period: " + days[0] + " to " + days[6] + " (last 7 days, local time)");
-  L.push("Generated: " + dayKey(now) + " " + pad(d.getHours()) + ":" + pad(d.getMinutes()));
-  L.push("Course: Lean 4 for blockchain (Ethereum and Solana), " + UNITS.length + " units, first-year level");
+  L.push("Generated: " + dayKey(now) + " " + pad(d.getHours()) + ":" + pad(d.getMinutes()) + ", app version of " + BUILT);
+  L.push("Course: Lean 4 through blockchain examples (Ethereum and Solana), " + UNITS.length + " units (Unit 0 to " + (UNITS.length - 1) + "), first-year level");
+  if (integrity === "edited") L.push("DATA CHECK: this progress was changed outside the app. The numbers below can't be verified.");
   L.push("");
   L.push("PROGRESS");
   L.push("Units mastered: " + UNITS.filter(isMastered).length + " of " + UNITS.length);
@@ -699,19 +886,19 @@ function buildReport() {
   UNITS.forEach(u => { const a = ans.filter(e => e.u === u.id); if (a.length) { any = true; const r = a.filter(e => e.ok).length; L.push("- Unit " + u.n + " " + u.title + ": " + r + "/" + a.length + " (" + pct(r, a.length) + "%)"); } });
   if (!any) L.push("- (none)");
   const tags = {};
-  ans.forEach(e => { const t = QMAP[e.q].q.tag; (tags[t] = tags[t] || { n: 0, r: 0 }); tags[t].n++; if (e.ok) tags[t].r++; });
+  ans.forEach(e => { const t = qinfo(e.q).tag; (tags[t] = tags[t] || { n: 0, r: 0 }); tags[t].n++; if (e.ok) tags[t].r++; });
   const weak = Object.entries(tags).filter(([, v]) => v.n >= 2 && v.r < v.n).sort((a, b) => (a[1].r / a[1].n) - (b[1].r / b[1].n) || b[1].n - a[1].n).slice(0, 5);
   L.push("Weakest concept tags (at least 2 answers, not perfect):");
   if (weak.length) weak.forEach(([t, v]) => L.push("- " + t + ": " + v.r + "/" + v.n + " (" + pct(v.r, v.n) + "%)")); else L.push("- (none)");
   L.push("");
   L.push("CONFIDENCE CHECK");
+  ["sure", "unsure", "guess"].forEach(c => { const a = ans.filter(e => e.conf === c); L.push("Marked " + CONF_LABEL[c] + ": " + a.length + " answers, " + (a.length ? pct(a.filter(e => e.ok).length, a.length) + "% right" : "n/a")); });
   const cw = ans.filter(e => e.conf === "sure" && !e.ok);
   L.push("Confident but wrong (marked Sure, answered wrong): " + cw.length);
-  cw.slice(-10).forEach(e => { const x = QMAP[e.q]; L.push("- Unit " + x.u.n + " [" + x.q.tag + "] \"" + plain(x.q.q).slice(0, 90) + "\""); });
-  L.push("Marked Guessing but right: " + ans.filter(e => e.conf === "guess" && e.ok).length);
+  cw.slice(-10).forEach(e => { const x = qinfo(e.q); L.push("- Unit " + x.u.n + " [" + x.tag + "]" + (x.q ? " \"" + plain(x.q.q).slice(0, 90) + "\"" : " (generated question)") + (e.fix ? " my note: " + e.fix : "")); });
   const slow = ans.filter(e => e.ms !== null && e.ms >= SLOW_MS).sort((a, b) => b.ms - a.ms);
   L.push("Slow questions (took over " + SLOW_MS / 1000 + " seconds to answer): " + slow.length);
-  slow.slice(0, 5).forEach(e => { const x = QMAP[e.q]; L.push("- Unit " + x.u.n + " [" + x.q.tag + "] " + Math.round(e.ms / 1000) + "s " + (e.ok ? "right" : "wrong")); });
+  slow.slice(0, 5).forEach(e => { const x = qinfo(e.q); L.push("- Unit " + x.u.n + " [" + x.tag + "] " + Math.round(e.ms / 1000) + "s " + (e.ok ? "right" : "wrong")); });
   L.push("");
   L.push("SPACED REVIEW");
   const bc = boxCounts();
@@ -719,15 +906,19 @@ function buildReport() {
   L.push("Cards per box: " + bc.map((c, i) => "box" + (i + 1) + "(" + BOXES[i] + "d)=" + c).join(", "));
   L.push("Review answers this week: " + ans.filter(e => e.kind === "review").length);
   L.push("");
-  L.push("FADED EXAMPLES");
+  L.push("LEARNING STEPS");
   const fd = inWin.filter(e => e.kind === "faded" && e.first);
-  L.push("Right on the first try: " + fd.filter(e => e.ok).length + " of " + fd.length + " attempted this week");
+  L.push("Fill-the-blank right on the first try: " + fd.filter(e => e.ok).length + " of " + fd.length);
+  const pr = inWin.filter(e => e.kind === "predict");
+  L.push("Worked examples predicted completely right: " + pr.filter(e => e.ok).length + " of " + pr.length);
+  const ex = UNITS.map(u => S.units[u.id] && S.units[u.id].explain).filter(x => x && x.t >= from);
+  L.push("Explain-it-back self-ratings this week: " + (ex.length ? ["covered", "partly", "missed"].map(k => k + "=" + ex.filter(x => x.rating === k).length).join(", ") : "none"));
   L.push("");
   L.push("MY NOTES");
   L.push(S.notes.trim() || "(none)");
   L.push("");
   L.push("REQUEST");
-  L.push("Please read this report and write me a self-improvement prompt that I can paste into Claude Code to update my Lean-Dash dashboard. Base it on the numbers above: which units and concept tags I struggle with, whether the pace thresholds (support below " + PACE.supportBelowPct + "%, challenge at " + PACE.challengeAtPct + "% or more) fit me, whether my review backlog is manageable, and what my confident-but-wrong answers suggest. Keep the changes small and concrete, do not make up research claims, and keep every Lean example compile-checked.");
+  L.push("Please read this report and write me a self-improvement prompt that I can paste into Claude Code to update my Learn Lean 4 app. Base it on the numbers above: which units and concept tags I struggle with, whether the pace thresholds (support below " + PACE.supportBelowPct + "%, challenge at " + PACE.challengeAtPct + "% or more) suit me, whether my review backlog is manageable, and what my confident-but-wrong answers suggest. Keep the changes small and concrete, don't make up research claims, and keep every Lean example checked against real Lean.");
   L.push("=== END OF REPORT ===");
   return L.join("\n");
 }
@@ -737,47 +928,46 @@ async function copyText(text, ta) {
 }
 function viewReport(app) {
   app.append(h("h1", null, "Weekly report"));
-  app.append(h("p", null, "This covers the last 7 days. Add your own notes, press ", h("b", null, "Copy report"), ", then paste it into Claude. Claude will write a self-improvement prompt for this dashboard."));
-  const notes = h("textarea", { id: "notes", rows: "4", maxlength: "5000", placeholder: "Anything Claude should know? What felt hard, what felt boring, how much time you really have…", value: S.notes });
+  app.append(h("p", null, "This covers the last 7 days. Add your own notes, press ", h("b", null, "Copy report"), ", then paste it into Claude. Claude will write a prompt that improves this app for you."));
+  const notes = h("textarea", { id: "notes", class: "prose", rows: "4", maxlength: "5000", placeholder: "Anything Claude should know? What was hard, what was boring, how much time you really have", value: S.notes });
   const out = h("textarea", { id: "reportText", rows: "26", readonly: true, "aria-label": "Report text" });
   const msg = h("div", { class: "msg", role: "status" });
   const refresh = () => { out.value = buildReport(); };
   notes.addEventListener("input", () => { S.notes = notes.value; save(); refresh(); });
-  app.append(h("label", { for: "notes", class: "label-small" }, "Your notes (included in the report)"), notes);
-  app.append(h("div", { class: "card" }, h("button", { onclick: async () => { refresh(); msg.textContent = (await copyText(out.value, out)) ? "✓ Copied. Paste it into Claude." : "Could not copy automatically. The text is selected: press Ctrl+C (Cmd+C on a Mac)."; } }, "Copy report"), msg, out));
+  app.append(h("label", { for: "notes", class: "label" }, "Your notes (included in the report)"), notes);
+  app.append(h("div", { class: "card" }, h("button", { onclick: async () => { refresh(); msg.textContent = (await copyText(out.value, out)) ? "Copied. Paste it into Claude." : "Couldn't copy automatically. The text is selected: press Ctrl+C (Cmd+C on a Mac)."; } }, "Copy report"), msg, out));
   refresh();
 }
 
-/* ===================== helpers: terms, backup, storage ===================== */
-function termsList(u) {
-  const dl = h("dl", { class: "terms" });
-  u.terms.forEach(([t, d]) => { dl.append(h("dt", { html: t }), h("dd", { html: d })); });
-  return dl;
-}
+/* ===================== helpers: backup, storage ===================== */
 let persisted = null;
 function persistNote() {
-  if (persisted === true) return "Storage protection: ON. Your browser has promised not to clear this data automatically.";
-  if (persisted === false) return "Storage protection: not granted. Your browser may clear this data if you clear site data or run low on space. That is why backup files matter.";
-  return "Storage protection: unknown on this browser. Keep a backup file to be safe.";
+  if (persisted === true) return "Storage protection is on. Your browser has promised not to clear this data by itself.";
+  if (persisted === false) return "Storage protection wasn't granted. Your browser may clear this data if you clear site data or run low on space. That's why backup files matter.";
+  return "Storage protection is unknown on this browser. Keep a backup file to be safe.";
 }
 function downloadBackup() {
   S.lastBackup = Date.now(); save();
-  const blob = new Blob([JSON.stringify(S)], { type: "application/json" });
+  const text = localStorage.getItem(KEY) || JSON.stringify(S);
+  const blob = new Blob([text], { type: "application/json" });
   const a = document.createElement("a");
   a.href = URL.createObjectURL(blob);
-  a.download = "lean-dash-backup-" + dayKey(Date.now()) + ".json";
+  a.download = "learn-lean-4-backup-" + dayKey(Date.now()) + ".json";
   document.body.append(a); a.click(); a.remove();
   setTimeout(() => URL.revokeObjectURL(a.href), 2000);
 }
 function doImport(text, msg) {
   try {
     if (!text.trim()) throw new Error("Paste saved progress into the box first.");
-    const s = sanitize(JSON.parse(text));
-    if (!confirm("Replace the progress in this browser with this data? This cannot be undone.")) return;
-    const sk = s._skipped; delete s._skipped; S = s; save(); renderNav(); updateToday();
-    msg.textContent = "✓ Imported " + S.log.length + " log entries" + (sk ? " (" + sk + " damaged entries skipped)" : "") + ".";
+    const parsed = JSON.parse(text), sig = checkSig(parsed);
+    if (sig === "none") throw new Error("This data has no signature. Only files saved by this app can be restored.");
+    if (sig === "edited") throw new Error("This file was changed after it was saved, so it can't be restored.");
+    const s = sanitize(parsed);
+    if (!confirm("Replace the progress in this browser with this data? This can't be undone.")) return;
+    const sk = s._skipped; delete s._skipped; S = s; integrity = "ok"; save(); renderNav(); updateToday();
+    msg.textContent = "Imported " + S.log.length + " log entries" + (sk ? " (" + sk + " damaged entries skipped)" : "") + ".";
   } catch (e) {
-    msg.textContent = "Import failed: " + (e instanceof SyntaxError ? "that is not valid progress text (it must be the exact text from Export or a backup file)." : e.message);
+    msg.textContent = "Import failed: " + (e instanceof SyntaxError ? "that isn't valid progress text (it must be the exact text from Export or a backup file)." : e.message);
   }
 }
 let deferredInstall = null;
@@ -786,66 +976,70 @@ addEventListener("beforeinstallprompt", ev => { ev.preventDefault(); deferredIns
 /* ===================== VIEW: start here ===================== */
 function viewStart(app) {
   app.append(h("h1", null, "Start here"));
-  app.append(h("p", null, "Welcome. You do not need any experience. This page explains how everything works. Read it once, then go to Unit 0."));
+  app.append(h("p", null, "You don't need any experience. This page explains how the course works. Read it once, then go to Unit 0."));
   const card = (title, ...kids) => h("div", { class: "card" }, h("h2", null, title), ...kids);
   app.append(card("What this is",
-    h("p", null, "A course that teaches you ", h("b", null, "Lean 4"), " (a programming language that can also check mathematical proofs) using examples from blockchains: Ethereum and Solana. It starts from zero. Unit 0 has no coding at all."),
-    h("p", null, "The dashboard keeps track of how you are doing. It remembers every answer, shows you what to practise again, and adjusts to your pace.")));
-  app.append(card("How each unit works",
-    h("p", null, "Every unit has seven steps. You can see them as buttons along the top of the unit. Go through them in order:"),
+    h("p", null, "A course in ", h("b", null, "Lean 4"), ", a programming language that can also check mathematical proofs. The examples come from blockchains: Ethereum and Solana. It starts from zero, and Unit 0 has no code at all."),
+    h("p", null, "The app remembers every answer, shows you what to practise again, and adjusts to your pace.")));
+  app.append(card("How a unit works",
+    h("p", null, "Each unit has seven steps, shown as buttons along the top. Go through them in order."),
     h("ol", null,
-      h("li", null, h("b", null, "Goals"), ": what you will be able to do, and the words you will meet."),
-      h("li", null, h("b", null, "Explain"), ": the ideas in plain language."),
-      h("li", null, h("b", null, "Worked example"), ": real Lean code. First you guess what it will print. Then you see what Lean really printed."),
-      h("li", null, h("b", null, "Bridge"), ": how the same idea looks in Solidity (Ethereum) or Rust (Solana). Just read it."),
+      h("li", null, h("b", null, "Goals"), ": what you'll be able to do, and the words you'll meet."),
+      h("li", null, h("b", null, "Explain"), ": the ideas in plain language. Press \"I've read this\" at the end."),
+      h("li", null, h("b", null, "Worked example"), ": real Lean code. You type a guess at what it prints, then see what Lean really printed, line by line. Then you explain the idea back in your own words."),
+      h("li", null, h("b", null, "Solidity and Rust"), ": how the same idea looks in the languages used on Ethereum and Solana. Just read it."),
       h("li", null, h("b", null, "Fill the blank"), ": finish one small piece of code."),
-      h("li", null, h("b", null, "Mastery quiz"), ": a few questions. Score 80% or more to unlock the next unit."),
+      h("li", null, h("b", null, "Mastery quiz"), ": score 80% to unlock the next unit."),
       h("li", null, h("b", null, "Practice"), ": try the code yourself in the Lean Playground.")),
-    h("p", null, "Each step starts with a blue box that says exactly what to do.")));
-  app.append(card("Getting questions wrong is part of it",
-    h("p", null, "Every answer is saved, right or wrong. After a quiz you see a ✓ or ✗ for every question. If you score under 80% you see the questions you missed with an explanation of each, and you can retake the quiz."),
-    h("p", null, "The ", h("a", { href: "#/progress" }, "My progress"), " page lists every attempt, your score each time, and the questions that still need work. Questions you get wrong come back on the ", h("a", { href: "#/review" }, "Review"), " page, so you practise exactly what you find hard."),
-    h("p", null, "Before you check each answer you pick Sure, Unsure or Guessing. That is so you can spot the answers you were sure about but got wrong. Those are the most useful mistakes.")));
+    h("p", null, "Every step opens with a shaded box that says what to do. The quiz stays locked until you've done the groundwork: read the explanation, predicted the worked example, got the blank right and explained the idea back.")));
+  app.append(card("How the quiz is marked",
+    h("ul", null,
+      h("li", null, "Some questions are multiple choice. Others you type, and the numbers are different every time, so there is nothing to memorise."),
+      h("li", null, "Before you check an answer, say how sure you are: Sure, Unsure or Guessing."),
+      h("li", null, "A right answer marked Guessing counts half. So does a multiple-choice answer given in under three seconds. The point is to know it, not to get lucky."),
+      h("li", null, "When you get one wrong, you write one sentence about what went wrong before you carry on."),
+      h("li", null, "If you score under 80%, you see what to go back over and retake with new questions.")),
+    h("p", null, "The ", h("a", { href: "#/progress" }, "My progress"), " page lists every attempt, your score each time, and the questions that still need work. Questions you miss come back on the ", h("a", { href: "#/review" }, "Review"), " page.")));
   const installKids = [
-    h("p", null, "This page works offline. Once it has loaded you do not need internet to study (only the Lean Playground and the links need internet)."),
-    h("p", null, "If it is hosted on a web address (one that starts with ", h("code", null, "https://"), "), Brave can install it like an app, with its own icon and window. Look for an ", h("b", null, "Install"), " icon at the right end of the address bar (it looks like a screen with a down arrow), or open the Brave menu and look for an Install item for this page. Once installed you can open it from your Start menu (Windows) or Applications folder (Mac), and it works without internet."),
-    h("p", { class: "muted" }, "If you opened this as a file from your computer you will not see an Install option. That is fine: it still works, in the browser.")
+    h("p", null, "Once the page has loaded it works without internet. Only the Lean Playground and the links need a connection."),
+    h("p", null, "If you're using the version on a web address (starting ", h("code", null, "https://"), "), Brave can install it like an app, with its own icon and window. Look for an ", h("b", null, "Install"), " icon at the right end of the address bar, or open the Brave menu and look for an Install item. Once installed you can open it from the Start menu (Windows) or the Applications folder (Mac)."),
+    h("p", { class: "muted" }, "If you opened it as a file from your computer you won't see an Install option. That's fine, it still works in the browser.")
   ];
   if (deferredInstall) installKids.push(h("button", { onclick: async () => { try { deferredInstall.prompt(); await deferredInstall.userChoice; } catch (e) { /* ignore */ } deferredInstall = null; route(); } }, "Install as an app"));
-  app.append(card("Using it as a desktop app, offline", ...installKids));
+  app.append(card("Using it as a desktop app", ...installKids));
   app.append(card("Where your progress is saved",
-    h("p", null, "Inside this browser (or this installed app), on this computer. Nobody else can see it and nothing is sent anywhere. Because of that:"),
+    h("p", null, "Inside this browser (or this installed app) on this computer. Nothing is sent anywhere. That means:"),
     h("ul", null,
-      h("li", null, "Always use the same browser or the same installed app. A different browser or computer starts empty."),
-      h("li", null, "If you clear your browser's site data, your progress is erased."),
-      h("li", null, "So once a week go to ", h("a", { href: "#/data" }, "Backup"), " and press ", h("b", null, "Save backup file"), ". If anything is ever lost, you load that file and everything comes back."))));
+      h("li", null, "Use the same browser or the same installed app each time. A different browser or computer starts empty."),
+      h("li", null, "Clearing your browser's site data erases your progress."),
+      h("li", null, "So once a week go to ", h("a", { href: "#/data" }, "Backup"), " and press ", h("b", null, "Save backup file"), ". Then copy the file into your vault or another safe place. If anything is lost, load that file and everything comes back."))));
   app.append(card("Running Lean code yourself",
-    h("p", null, h("b", null, "Easiest: the Lean Playground."), " Open ", link("live.lean-lang.org", "https://live.lean-lang.org/"), " in your browser. Nothing to install. Delete what is in the editor, type or paste code, and the results appear next to it. It needs internet and does not save your code."),
-    h("p", null, "Later, if you want to work on your own computer, the ", h("a", { href: "#/sources" }, "Sources"), " page shows how to set up VS Code."),
-    h("p", null, "Lean's own website recommends the ", link("Natural Number Game", "https://adam.math.hhu.de/#/g/leanprover-community/NNG4"), " for beginners. It is a free game in your browser. It is a good thing to try alongside this course.")));
-  app.append(card("If you feel lost",
-    h("p", null, "That is normal, and it is not a sign that you are bad at this. Look in the ", h("b", null, "Words to know"), " box and the ", h("a", { href: "#/glossary" }, "Glossary"), ". Read the explanation again. The dashboard also slows down by itself: if your recent answers go badly it switches to Support mode, which shows the explanation one idea at a time and puts hints on every question."),
-    h("p", null, "Once a week the ", h("a", { href: "#/report" }, "Weekly report"), " lets you copy a summary and paste it to Claude, who can then improve the dashboard for you.")));
+    h("p", null, h("b", null, "The easy way: the Lean Playground."), " Open ", link("live.lean-lang.org", "https://live.lean-lang.org/"), " in your browser. There is nothing to install. Delete what's in the editor, type or paste code, and the results appear next to it. It needs internet and doesn't save your code."),
+    h("p", null, "If you later want to work on your own computer, the ", h("a", { href: "#/sources" }, "Sources"), " page shows how to set up VS Code."),
+    h("p", null, "Lean's own website recommends the ", link("Natural Number Game", "https://adam.math.hhu.de/#/g/leanprover-community/NNG4"), " for beginners. It's a free game in your browser and works well alongside this course.")));
+  app.append(card("If it gets hard",
+    h("p", null, "Check the ", h("b", null, "Words to know"), " box and the ", h("a", { href: "#/glossary" }, "Glossary"), ". Read the explanation again. If your recent answers go badly, the app switches to Support mode on its own: explanations arrive one idea at a time and every question shows the key ideas."),
+    h("p", null, "Once a week the ", h("a", { href: "#/report" }, "Weekly report"), " gives you a summary you can paste to Claude, who can then adjust the app to how you're getting on.")));
   app.append(h("a", { class: "btn", href: "#/unit/u0" }, "Go to Unit 0"));
 }
 
 /* ===================== VIEW: my progress ===================== */
 function viewProgress(app) {
   app.append(h("h1", null, "My progress"));
-  const ans = S.log.filter(e => e.kind !== "faded");
+  const inote = integrityNote(); if (inote) app.append(inote);
+  const ans = S.log.filter(isAnswer);
   const right = ans.filter(e => e.ok).length;
   const mins = Object.values(S.secs).reduce((a, b) => a + b, 0) / 60;
   const stat = (big, small) => h("div", { class: "stat" }, h("b", null, big), h("small", null, small));
   app.append(h("div", { class: "grid2" },
     stat(UNITS.filter(isMastered).length + " of " + UNITS.length, "units mastered"),
     stat(String(ans.length), "answers so far"),
-    stat(ans.length ? pct(right, ans.length) + "%" : "–", "of your answers were right"),
-    stat(Math.round(mins) + " min", "active study time")));
+    stat(ans.length ? pct(right, ans.length) + "%" : "-", "of your answers were right"),
+    stat(Math.round(mins) + " min", "study time")));
   if (!ans.length) {
-    app.append(h("div", { class: "card" }, h("p", null, "Nothing to show yet. Once you answer quiz questions, every result is listed here: what you got right, what you missed, and how your scores change from attempt to attempt."), h("a", { class: "btn", href: "#/start" }, "Start here")));
+    app.append(h("div", { class: "card" }, h("p", null, "Nothing to show yet. Once you answer quiz questions, every result is listed here: what you got right, what you missed, and how your scores change from one attempt to the next."), h("a", { class: "btn", href: "#/start" }, "Start here")));
     return;
   }
-  // scores by unit
   app.append(h("h2", null, "Quiz scores by unit"));
   const rows = UNITS.map((u, i) => {
     const us = S.units[u.id] || { best: 0, attempts: 0, history: [] };
@@ -856,45 +1050,52 @@ function viewProgress(app) {
       h("td", null, h("a", { href: st === "locked" ? "#/map" : "#/unit/" + u.id }, "Unit " + u.n), " " + u.title),
       h("td", null, st === "mastered" ? "✓ Mastered" : st === "open" ? "Open" : "Locked"),
       h("td", null, String(us.attempts || 0)),
-      h("td", null, last ? pct(last.right, last.total) + "%" : "–"),
-      h("td", null, us.attempts ? us.best + "%" : "–"),
-      h("td", null, hist.length ? hist.map(a => h("div", null, dayKey(a.t) + ": " + a.right + "/" + a.total + " (" + pct(a.right, a.total) + "%)")) : "–"));
+      h("td", null, last ? last.score + "%" : "-"),
+      h("td", null, us.attempts ? us.best + "%" : "-"),
+      h("td", null, hist.length ? hist.map(a => h("div", null, dayKey(a.t) + ": " + a.right + "/" + a.total + " right, score " + a.score + "%")) : "-"));
   });
   app.append(h("div", { class: "tbl" }, h("table", null,
     h("thead", null, h("tr", null, ["Unit", "Status", "Attempts", "Latest", "Best", "Every attempt"].map(t => h("th", null, t)))),
     h("tbody", null, rows))));
-  // per question
   const qs = {};
-  ans.forEach(e => { const x = qs[e.q] || (qs[e.q] = { r: 0, w: 0, last: null }); if (e.ok) x.r++; else x.w++; x.last = e.ok; });
-  const order = {}; let k = 0; UNITS.forEach(u => { u.quiz.concat([u.challenge]).forEach(q => { order[q.id] = k++; }); });
-  const list = Object.keys(qs).filter(id => QMAP[id]).sort((a, b) => order[a] - order[b]);
-  const qtext = id => { const q = QMAP[id].q; return plain(q.q) + (q.code ? "  [" + q.code.replace(/\s+/g, " ") + "]" : ""); };
+  ans.forEach(e => { const x = qs[e.q] || (qs[e.q] = { r: 0, w: 0, last: null, fix: "" }); if (e.ok) x.r++; else { x.w++; if (e.fix) x.fix = e.fix; } x.last = e.ok; });
+  const order = {}; let k = 0;
+  UNITS.forEach(u => { u.quiz.concat([u.challenge]).forEach(q => { order[q.id] = k++; }); GENS.filter(g => g.unit === u.id).forEach(g => { order[g.id] = k++; }); });
+  const list = Object.keys(qs).filter(knownQ).sort((a, b) => order[a] - order[b]);
+  const qtext = id => { const m = qinfo(id); if (m.gen) return "Generated question: " + tagName(m.tag); const q = m.q; return plain(q.q) + (q.code ? "  [" + q.code.replace(/\s+/g, " ") + "]" : ""); };
   const need = list.filter(id => qs[id].last === false);
   app.append(h("h2", null, "Questions that need work (" + need.length + ")"));
   if (!need.length) app.append(h("p", null, "None. Your latest answer to every question was right."));
   need.forEach(id => {
-    const m = QMAP[id];
+    const m = qinfo(id);
     app.append(h("div", { class: "card" },
-      h("div", { class: "tagline" }, "Unit " + m.u.n + " · " + tagName(m.q.tag)),
+      h("div", { class: "tagline" }, "Unit " + m.u.n + ". " + tagName(m.tag)),
       h("p", null, h("span", { class: "m-no" }, "✗ "), qtext(id)),
-      h("p", null, h("b", null, "Correct answer: "), h("span", { html: m.q.options[m.q.a] })),
-      h("p", { html: m.q.why }),
+      !m.gen && h("p", null, h("b", null, "Answer: "), h("span", { html: m.q.options[m.q.a] })),
+      !m.gen && h("p", { html: m.q.why }),
+      m.gen && h("p", { class: "muted" }, "The numbers change each time, so practise the skill again in the quiz or in Review."),
+      qs[id].fix && h("p", null, h("b", null, "Your note: "), qs[id].fix),
       h("a", { href: "#/unit/" + m.u.id }, "Go to Unit " + m.u.n)));
   });
-  app.append(h("h2", null, "Every question you have answered"));
+  app.append(h("h2", null, "Every question you've answered"));
   app.append(h("div", { class: "tbl" }, h("table", null,
     h("thead", null, h("tr", null, ["Latest", "Unit", "Concept", "Question", "Right", "Wrong", "Review box"].map(t => h("th", null, t)))),
     h("tbody", null, list.map(id => {
-      const m = QMAP[id], x = qs[id], c = S.cards[id];
+      const m = qinfo(id), x = qs[id], c = S.cards[id];
       return h("tr", null,
         h("td", null, h("span", { class: x.last ? "m-ok" : "m-no" }, x.last ? "✓" : "✗")),
-        h("td", null, String(m.u.n)), h("td", null, tagName(m.q.tag)),
+        h("td", null, String(m.u.n)), h("td", null, tagName(m.tag)),
         h("td", null, qtext(id).slice(0, 110)),
-        h("td", null, String(x.r)), h("td", null, String(x.w)), h("td", null, c ? String(c.box) : "–"));
+        h("td", null, String(x.r)), h("td", null, String(x.w)), h("td", null, c ? String(c.box) : "-"));
     })))));
-  // concepts
+  // how well your confidence matched reality
+  app.append(h("h2", null, "How well you know what you know"));
+  app.append(h("p", { class: "muted" }, "Before each answer you said how sure you were. If \"Sure\" is right far more often than \"Guessing\", your sense of what you know is reliable. If \"Sure\" is often wrong, slow down on those topics."));
+  app.append(h("div", { class: "tbl" }, h("table", null,
+    h("thead", null, h("tr", null, ["You said", "Answers", "Right", "Accuracy"].map(t => h("th", null, t)))),
+    h("tbody", null, ["sure", "unsure", "guess"].map(c => { const a = ans.filter(e => e.conf === c), r = a.filter(e => e.ok).length; return h("tr", null, h("td", null, CONF_LABEL[c]), h("td", null, String(a.length)), h("td", null, String(r)), h("td", null, a.length ? pct(r, a.length) + "%" : "-")); })))));
   const tags = {};
-  ans.forEach(e => { if (!QMAP[e.q]) return; const t = QMAP[e.q].q.tag; const x = tags[t] || (tags[t] = { n: 0, r: 0 }); x.n++; if (e.ok) x.r++; });
+  ans.forEach(e => { if (!knownQ(e.q)) return; const t = qinfo(e.q).tag; const x = tags[t] || (tags[t] = { n: 0, r: 0 }); x.n++; if (e.ok) x.r++; });
   const tl = Object.keys(tags).sort((a, b) => (tags[a].r / tags[a].n) - (tags[b].r / tags[b].n) || tags[b].n - tags[a].n);
   app.append(h("h2", null, "Concepts, weakest first"));
   app.append(h("div", { class: "tbl" }, h("table", null,
@@ -930,28 +1131,40 @@ function viewGlossary(app) {
 
 /* ===================== VIEW: method ===================== */
 function viewMethod(app) {
-  app.append(h("h1", null, "Why this dashboard works the way it does"));
-  app.append(h("p", { class: "muted" }, "Each feature is based on a well-known teaching technique. The sources are listed at the bottom so you can read them yourself."));
+  app.append(h("h1", null, "How the course teaches"));
+  app.append(h("p", { class: "muted" }, "Each feature comes from a well-known teaching technique. The sources are at the bottom so you can read them yourself."));
   const sec = (title, body) => h("div", { class: "card" }, h("h2", null, title), body);
   app.append(
-    sec("Practice testing and distributed practice", h("div", null,
-      h("p", null, "Dunlosky and colleagues (2013) reviewed ten common study techniques. They rated ", h("b", null, "practice testing"), " (quizzing yourself) and ", h("b", null, "distributed practice"), " (spreading study over time instead of cramming) as the two with the highest utility."),
+    sec("Practice testing and spacing", h("div", null,
+      h("p", null, "Dunlosky and colleagues (2013) reviewed ten common study techniques. They rated ", h("b", null, "practice testing"), " (quizzing yourself) and ", h("b", null, "distributed practice"), " (spreading study over time instead of cramming) highest in utility."),
       h("p", null, h("b", null, "Here: "), "every unit ends in a quiz, and every question you answer becomes a review card that comes back after 1, 3, 7, 14 and 30 days (the Leitner box system). A wrong answer sends the card back to box 1."))),
-    sec("Interleaving", h("div", null,
-      h("p", null, "Mixing different topics in one study session, instead of doing one topic at a time. Dunlosky et al. rated interleaved practice as ", h("b", null, "moderate"), " utility."),
-      h("p", null, h("b", null, "Here: "), "the Review tab mixes due cards from all units in random order."))),
+    sec("Mixing topics", h("div", null,
+      h("p", null, "Mixing different topics in one session, rather than doing one at a time. Dunlosky et al. rated interleaved practice as ", h("b", null, "moderate"), " utility."),
+      h("p", null, h("b", null, "Here: "), "Review mixes the due cards from every unit in random order."))),
     sec("Worked examples, then faded examples", h("div", null,
-      h("p", null, "Beginners often learn more from studying a fully solved example than from being thrown into a problem (Sweller & Cooper, 1985). Renkl & Atkinson (2002) describe the next step, where solution steps are gradually removed (\"faded\") so you take over a little at a time."),
-      h("p", null, h("b", null, "Here: "), "each unit shows a worked example with real Lean output (you predict first), then a faded example with one blank for you to fill, then the quiz."))),
-    sec("Mastery learning with correctives", h("div", null,
-      h("p", null, "Bloom's mastery learning model: you must reach a set standard on a short test before you move on. If you miss it, you get feedback and corrective work, and then you test again. Kulik, Kulik & Bangert-Drowns (1990) reviewed 108 studies of mastery programmes in a meta-analysis."),
-      h("p", null, h("b", null, "Here: "), PASS_PCT + "% on the unit quiz unlocks the next unit. Below that you see the questions you missed with explanations, links back to the worked example, and a retake in a new order."))),
-    sec("Confidence ratings, pace and time: what is NOT research-backed", h("div", null,
-      h("p", null, "Choosing sure / unsure / guessing before each answer has no research claim made for it here. It is only a way to spot answers that were confidently wrong, which are worth a closer look."),
-      h("p", null, "The pace thresholds (support below " + PACE.supportBelowPct + "%, challenge at " + PACE.challengeAtPct + "% or more), the box intervals and the 2-minute idle cutoff are design choices for this dashboard, not numbers taken from the studies. That is why the weekly report exists: you can tell Claude what is not working and adjust them."))));
+      h("p", null, "Beginners often learn more from studying a solved example than from being thrown into a problem (Sweller & Cooper, 1985). Renkl & Atkinson (2002) describe the next step: remove the solution steps gradually so you take over a little at a time."),
+      h("p", null, h("b", null, "Here: "), "each unit shows a worked example with real Lean output, then a fill-the-blank, then the quiz."))),
+    sec("Explaining in your own words", h("div", null,
+      h("p", null, "Dunlosky et al. rated self-explanation, where you explain how or why something works, as ", h("b", null, "moderate"), " utility."),
+      h("p", null, h("b", null, "Here: "), "you predict the worked example before seeing it, and you explain each unit back in your own words and compare with a model answer. After a wrong quiz answer you write a sentence about what went wrong."))),
+    sec("Mastery learning", h("div", null,
+      h("p", null, "Bloom's mastery learning model: reach a set standard on a short test before moving on, and if you miss it, get feedback and corrective work, then test again. Kulik, Kulik & Bangert-Drowns (1990) reviewed 108 studies of mastery programmes in a meta-analysis."),
+      h("p", null, h("b", null, "Here: "), PASS_PCT + "% unlocks the next unit. Below that, you see what you missed with an explanation, and you retake with new questions."))),
+    sec("Keeping it honest", h("div", null,
+      h("p", null, "This is a page that runs on your own computer, so anyone willing to dig through it could get around any rule. The aim isn't to stop a determined person. It's to make sure that the only person a shortcut can fool is you."),
+      h("ul", null,
+        h("li", null, "Numeric questions are made fresh with new numbers each time, and you type the answer. There's no stored answer to look up or memorise, and no list to guess from."),
+        h("li", null, "Multiple-choice options appear in a new order every time."),
+        h("li", null, "A right answer marked Guessing, or a multiple-choice answer given in under three seconds, counts half."),
+        h("li", null, "The quiz stays locked until you've done the groundwork for the unit."),
+        h("li", null, "Your saved progress is signed. If it is edited outside the app, the app says so, and the weekly report says so too.")),
+      h("p", null, "Every question that has code in it was checked against real Lean 4.36.0, including thousands of randomly generated ones."))),
+    sec("What isn't backed by research", h("div", null,
+      h("p", null, "Asking you to choose Sure, Unsure or Guessing has no research claim made for it here. It's a way to spot answers that were confidently wrong."),
+      h("p", null, "The pace thresholds (support below " + PACE.supportBelowPct + "%, challenge at " + PACE.challengeAtPct + "% or more), the box intervals, the half-credit rules and the 2-minute idle cutoff are design choices, not numbers taken from the studies. The weekly report exists so you can tell Claude what isn't working and have them adjusted."))));
   app.append(h("h2", null, "Reading list"));
   app.append(h("ul", null, METHOD_SOURCES.map(([t, u]) => h("li", null, link(t, u)))));
-  app.append(h("p", { class: "muted" }, "Sweller & Cooper (1985), \"The use of worked examples as a substitute for problem solving in learning algebra\", Cognition and Instruction. Named here but not linked; search for the title to find it."));
+  app.append(h("p", { class: "muted" }, "Sweller & Cooper (1985), \"The use of worked examples as a substitute for problem solving in learning algebra\", Cognition and Instruction. Not linked here; search for the title to find it."));
 }
 
 /* ===================== VIEW: sources + setup ===================== */
@@ -959,7 +1172,7 @@ function viewSources(app) {
   app.append(h("h1", null, "Sources and setup"));
   app.append(h("div", { class: "card" }, h("h2", null, "Run Lean code: two ways"),
     h("h3", null, "Way 1: in your browser, nothing to install (easiest)"),
-    h("p", null, "Open the ", link("Lean Playground", "https://live.lean-lang.org/"), ". Delete what is in the editor, paste or type your code, and the results appear next to it. It needs internet and it does not save your code, so copy anything you want to keep."),
+    h("p", null, "Open the ", link("Lean Playground", "https://live.lean-lang.org/"), ". Delete what's in the editor, paste or type your code, and the results appear next to it. It needs internet and it doesn't save your code, so copy anything you want to keep."),
     h("h3", null, "Way 2: on your computer with VS Code (later, if you want)"),
     h("ol", null,
       h("li", null, "Install ", link("Visual Studio Code", "https://code.visualstudio.com/"), "."),
@@ -967,39 +1180,43 @@ function viewSources(app) {
       h("li", null, "Follow the extension's own setup guide. It walks you through installing Lean itself."),
       h("li", null, "Keep Lean at version 4.32.2 or later (2026 kernel soundness fixes). The examples in this course were tested on Lean 4.36.0."),
       h("li", null, "Check it works: make a file ending in ", h("code", null, ".lean"), ", type ", h("code", null, "#eval 2 + 3"), ", click on the line and look for ", h("code", null, "5"), " in the Infoview panel.")),
-    h("p", { class: "muted" }, "Lean's own Learn page recommends the Natural Number Game for beginners. It is linked below.")));
+    h("p", { class: "muted" }, "Lean's own Learn page recommends the Natural Number Game for beginners. It's linked below.")));
   app.append(h("h2", null, "Sources used in the course"));
   app.append(h("ul", null, SOURCES.map(([t, u]) => h("li", null, link(t, u)))));
   app.append(h("h2", null, "Sources for the teaching method"));
   app.append(h("ul", null, METHOD_SOURCES.map(([t, u]) => h("li", null, link(t, u)))));
 }
 
-/* ===================== VIEW: data (save / restore) ===================== */
+/* ===================== VIEW: backup ===================== */
 function viewData(app) {
-  app.append(h("h1", null, "Save and restore progress"));
-  app.append(h("p", null, "Progress is kept in this browser on this computer. To back it up or move it, copy it out as text here and paste it back in later. Nothing is downloaded or sent anywhere."));
-  app.append(h("p", { class: "muted" }, "Answer log: " + S.log.length + " of " + LOG_CAP + " entries kept (the oldest are dropped after that). Browser storage: " + (storageOK ? "working" : "BLOCKED, progress will not survive closing the page") + "."));
-  const ta = h("textarea", { rows: "10", "aria-label": "Progress data", placeholder: "Press Export to fill this box, or paste saved progress here and press Import." });
+  app.append(h("h1", null, "Backup and restore"));
+  app.append(h("p", null, "Progress is kept in this browser on this computer. To back it up or move it, save a backup file here and load it back later. Nothing is sent anywhere."));
+  app.append(h("p", { class: "muted" }, "Answer log: " + S.log.length + " of " + LOG_CAP + " entries kept (the oldest are dropped after that). Browser storage: " + (storageOK ? "working" : "BLOCKED, progress won't survive closing the page") + "."));
+  const ta = h("textarea", { rows: "8", "aria-label": "Progress data", placeholder: "Press Export to fill this box, or paste saved progress here and press Import." });
   const msg = h("div", { class: "msg", role: "status" });
   const fileMsg = h("div", { class: "msg", role: "status" });
   const fileIn = h("input", { type: "file", accept: ".json,application/json", "aria-label": "Choose a backup file", onchange: ev => {
     const f = ev.target.files && ev.target.files[0]; if (!f) return;
     const rd = new FileReader();
     rd.onload = () => { doImport(String(rd.result), fileMsg); };
-    rd.onerror = () => { fileMsg.textContent = "Could not read that file."; };
+    rd.onerror = () => { fileMsg.textContent = "Couldn't read that file."; };
     rd.readAsText(f);
   } });
   app.append(h("div", { class: "card" }, h("h2", null, "Backup file (recommended)"),
     h("p", null, "Press the button to save a small file with all your progress. Keep it somewhere safe. If your progress is ever lost, load that file here to get it back. Do this about once a week."),
-    h("button", { onclick: () => { downloadBackup(); fileMsg.textContent = "✓ Backup file saved to your Downloads folder."; } }, "Save backup file"),
+    h("button", { onclick: () => { downloadBackup(); fileMsg.textContent = "Backup file saved to your Downloads folder."; } }, "Save backup file"),
     h("p", null, h("label", null, "Load a backup file: ", fileIn)), fileMsg,
-    h("p", { class: "muted", id: "persistNote" }, persistNote())));
+    h("p", { class: "muted", id: "persistNote" }, persistNote()),
+    h("p", { class: "muted" }, "Backup files are signed. A file that was edited by hand is refused.")));
+  app.append(h("div", { class: "card" }, h("h2", null, "Keep a second copy"),
+    h("p", null, "A file that only lives in your Downloads folder is one tidy-up away from being gone. After you save a backup, copy it somewhere that isn't just this computer: your Tripwire vault, a USB stick, or cloud storage you trust. Then a lost browser or a new machine costs you nothing."),
+    h("p", { class: "muted" }, "To restore later, come back to this page and load the file above.")));
   app.append(h("h2", null, "Copy and paste instead"));
   app.append(ta, h("div", null,
-    h("button", { onclick: async () => { S.lastBackup = Date.now(); save(); ta.value = JSON.stringify(S); msg.textContent = (await copyText(ta.value, ta)) ? "✓ Exported and copied. Save it somewhere safe (a note or file)." : "Exported. The text is in the box: select it all and copy it yourself."; } }, "Export (copy)"),
+    h("button", { onclick: async () => { S.lastBackup = Date.now(); save(); ta.value = localStorage.getItem(KEY) || JSON.stringify(S); msg.textContent = (await copyText(ta.value, ta)) ? "Exported and copied. Save it somewhere safe (a note or file)." : "Exported. The text is in the box: select it all and copy it yourself."; } }, "Export (copy)"),
     h("button", { class: "secondary", onclick: () => { doImport(ta.value, msg); } }, "Import (replace)"),
     h("button", { class: "danger", onclick: () => {
-      if (confirm("Delete ALL progress in this browser? Export first if you might want it back.")) { S = blank(); save(); renderNav(); updateToday(); ta.value = ""; msg.textContent = "Progress reset."; }
+      if (confirm("Delete ALL progress in this browser? Save a backup first if you might want it back.")) { S = blank(); integrity = "new"; save(); renderNav(); updateToday(); ta.value = ""; msg.textContent = "Progress reset."; }
     } }, "Reset everything")), msg);
 }
 

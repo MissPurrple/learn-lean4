@@ -12,27 +12,7 @@ const extra = path.join(root, "content-beginner.js");
 if (fs.existsSync(extra)) src += "\n" + fs.readFileSync(extra, "utf8");
 const UNITS = new Function(src + "\n;return UNITS;")();
 
-// Definitions that earlier units introduce and later units' code relies on.
-const ACCOUNT = `structure Account where
-  owner    : String
-  lamports : Nat
-deriving Repr
-
-`;
-const TOTAL = `def total : List Account → Nat
-  | []        => 0
-  | a :: rest => a.lamports + total rest
-
-`;
-const TRANSFER = `def transfer (src dst : Account) (amount : Nat) : Except String (Account × Account) :=
-  if amount ≤ src.lamports then
-    .ok ({ src with lamports := src.lamports - amount },
-         { dst with lamports := dst.lamports + amount })
-  else
-    .error "insufficient funds"
-
-`;
-const PRELUDE = { u5: ACCOUNT, u6: ACCOUNT, u8: ACCOUNT + TOTAL + TRANSFER };
+// Earlier-unit code that a unit's worked example builds on is stored with the unit as `prelude`.
 const SKIP = { u9: "reading-only code (redeclares Nat and List, which Lean rejects on purpose)" };
 
 const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "leancheck-"));
@@ -41,7 +21,7 @@ const norm = s => s.split("\n").map(l => l.replace(/\s+$/, "")).join("\n").trim(
 for (const u of UNITS) {
   if (SKIP[u.id]) { console.log("SKIP", u.id, "-", SKIP[u.id]); continue; }
   const file = path.join(tmp, u.id + ".lean");
-  fs.writeFileSync(file, (PRELUDE[u.id] || "") + u.worked.code + "\n");
+  fs.writeFileSync(file, (u.prelude ? u.prelude + "\n\n" : "") + u.worked.code + "\n");
   const r = spawnSync("lean", [file], { encoding: "utf8", timeout: 240000 });
   const got = norm(((r.stdout || "") + (r.stderr || "")).split(file).join("FILE"));
   const want = norm(u.worked.output);
