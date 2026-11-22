@@ -1,5 +1,6 @@
 // Click-through test of the app in a real browser.
-//   NODE_PATH=$(npm root -g) node tests/e2e.js "$PWD/index.html" /tmp
+//   python3 build.py --test
+//   NODE_PATH=$(npm root -g) node tests/e2e.js "$PWD/tests/build/index.html" /tmp
 // Uses a test-only hook (window.__LEAN_TEST) so the test can read the expected answer of the
 // question on screen. A real learner never sets it.
 const { chromium } = require('playwright');
@@ -44,6 +45,8 @@ const url = (hash) => 'file://' + path + (hash || '');
     if (!opts.correct) {
       const next = page.getByRole('button', { name: /Next question|See result/ });
       ex.nextDisabledWithoutFix = await next.isDisabled();
+      await page.locator('#fixnote').fill('xxxxxxxxxxxxxxxx');
+      ex.nextDisabledWithFiller = await next.isDisabled();
       await page.locator('#fixnote').fill(opts.fix);
       ex.nextEnabledWithFix = !(await next.isDisabled());
     }
@@ -101,7 +104,9 @@ const url = (hash) => 'file://' + path + (hash || '');
   const reveal = page.getByRole('button', { name: /Reveal/ });
   check('cannot reveal the output without predicting', await reveal.isDisabled());
   await page.locator('#guess').fill('5');
-  check('one short guess is still not enough', await reveal.isDisabled());
+  check('one answer is not enough when the example prints three lines', await reveal.isDisabled());
+  await page.locator('#guess').fill('a\nb');
+  check('two of three lines is still not enough', await reveal.isDisabled());
   await page.locator('#guess').fill('5\n40\n"Hello, Lean"');
   check('typing a prediction enables the reveal', !(await reveal.isDisabled()));
   await reveal.click();
@@ -111,6 +116,8 @@ const url = (hash) => 'file://' + path + (hash || '');
   check('model answer locked until the learner writes something', await showModel.isDisabled());
   await page.locator('textarea.prose').fill('Too short');
   check('a short note is still not enough', await showModel.isDisabled());
+  await page.locator('textarea.prose').fill('aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa');
+  check('long filler with no real words is not enough', await showModel.isDisabled());
   await page.locator('textarea.prose').fill('Tests only try some inputs, a proof covers every input, and money makes the missed case costly.');
   await showModel.click();
   check('model answer shown after writing', /model answer/i.test(await page.locator('main').innerText()));
@@ -120,7 +127,14 @@ const url = (hash) => 'file://' + path + (hash || '');
   const fadedAns = await page.evaluate(() => { const f = UMAP.u0.faded; return { right: f.options[f.answer], wrong: f.options[(f.answer + 1) % f.options.length] }; });
   const pickOpt = async (txt) => page.locator('label.opt', { has: page.locator('code:text-is("' + txt + '")') }).locator('input').check();
   await pickOpt(fadedAns.wrong); await page.getByRole('button', { name: 'Check', exact: true }).click();
-  check('fill-the-blank: a wrong pick says try again', (await page.locator('.fb.no').count()) === 1);
+  check('fill-the-blank: a wrong pick is marked and asks for a note', (await page.locator('.fb.no').count()) === 1 && (await page.locator('#fnote').count()) === 1);
+  const again = page.getByRole('button', { name: 'Try again' });
+  check('cannot try again without a note', await again.isDisabled());
+  await page.locator('#fnote').fill('xxxxxxxxxxxxxxxx');
+  check('filler text is not accepted as a note', await again.isDisabled());
+  await page.locator('#fnote').fill('That one multiplies by the wrong thing');
+  check('a real sentence unlocks the retry', !(await again.isDisabled()));
+  await again.click();
   await pickOpt(fadedAns.right); await page.getByRole('button', { name: 'Check', exact: true }).click();
   check('fill-the-blank: right pick explains why', (await page.locator('.fb.ok').innerText()).includes('multiply'));
   const fs0 = await page.evaluate(() => ({ f: S.faded.u0, p: S.units.u0.prep.faded }));
@@ -177,6 +191,7 @@ const url = (hash) => 'file://' + path + (hash || '');
   const log2 = [];
   for (let k = 0; k < n2; k++) { await grabCode(typedCode1); log2.push(await answer({ correct: k < 3, conf: 'sure' })); order1.push(k); }
   check('wrong answers cannot continue without a written note', log2.filter(x => x.nextDisabledWithoutFix === true).length === n2 - 3 && log2.filter(x => x.nextEnabledWithFix === true).length === n2 - 3);
+  check('filler text ("xxxxxxxx") is not accepted as a note', log2.filter(x => x.nextDisabledWithFiller === true).length === n2 - 3);
   check('first attempt scores 3 of 7 = 43% and fails', (await page.evaluate(() => S.units.u2.history[0].score)) === 43 && (await page.locator('h2', { hasText: 'Not there yet' }).count()) === 1);
   check('what to go back over lists every missed question with the learner\'s own note', (await page.locator('h3', { hasText: 'What to go back over' }).count()) === 1 && (await page.locator('main').innerText()).includes('You wrote: I mixed up the two ideas there.'));
   check('the written notes are saved in the log', (await page.evaluate(() => S.log.filter(e => e.fix === 'I mixed up the two ideas there.').length)) === n2 - 3);
@@ -193,18 +208,27 @@ const url = (hash) => 'file://' + path + (hash || '');
   const differs = typedCode1.length >= 2 && typedCode2.length >= 2 && JSON.stringify(typedCode1) !== JSON.stringify(typedCode2);
   check('typed questions have different numbers on the retake', differs, JSON.stringify([typedCode1.map(x => x.slice(-30)), typedCode2.map(x => x.slice(-30))]));
 
+  // ============ 4b. an abandoned quiz still counts as an attempt ============
+  await setPrep('u3'); await goHash('#/unit/u3');
+  await stepBtn('6 Mastery').click();
+  await page.getByRole('button', { name: 'Start quiz' }).click();
+  await answer({ correct: true });
+  await goHash('#/map');
+  const ab = await page.evaluate(() => ({ a: S.units.u3.attempts, h: S.units.u3.history.slice() }));
+  check('leaving a quiz half way still records an attempt, scored 0', ab.a === 1 && ab.h.length === 1 && ab.h[0].score === 0, JSON.stringify(ab));
+
   // ============ 5. rush rule, per-option notes, shuffling, answer matching ============
   await setPrep('u3'); await goHash('#/unit/u3');
   await page.evaluate(() => { RUSH_MS = 3000; });
   await stepBtn('6 Mastery').click();
-  await page.getByRole('button', { name: 'Start quiz' }).click();
+  await page.getByRole('button', { name: /Start (quiz|retake)/ }).click();
   const n3 = (await qCounts()).n;
   const log3 = await runQuiz(() => ({ correct: true, conf: 'sure' }));
   const mc3 = log3.filter(x => x.type === 'mc'), ty3 = log3.filter(x => x.type === 'typed');
   check('fast multiple-choice answers earn half credit and say why', mc3.length > 0 && mc3.every(x => /half/.test(x.feedback) && /seconds/.test(x.feedback)));
   check('typed answers are never penalised for speed', ty3.length > 0 && ty3.every(x => !/half/.test(x.feedback)));
   const expScore = Math.round(100 * (mc3.length * 0.5 + ty3.length) / n3);
-  check('score reflects the half credits (' + expScore + '%) and does not pass', (await page.evaluate(() => S.units.u3.history[0].score)) === expScore && !(await page.evaluate(() => S.units.u3.mastered)), expScore);
+  check('score reflects the half credits (' + expScore + '%) and does not pass', (await page.evaluate(() => S.units.u3.history[S.units.u3.history.length - 1].score)) === expScore && !(await page.evaluate(() => S.units.u3.mastered)), expScore);
   await page.evaluate(() => { RUSH_MS = 0; });
   // per-option notes: pick the tempting wrong option on u1q1
   await goHash('#/unit/u1'); await stepBtn('6 Mastery').click();
@@ -222,6 +246,28 @@ const url = (hash) => 'file://' + path + (hash || '');
   check('typed answers ignore spaces, case and commas but not digits', norm.every(Boolean), JSON.stringify(norm));
   const lens = await page.evaluate(() => { const bad = []; UNITS.forEach(u => u.quiz.forEach(q => { if (q.optWhy && (q.optWhy.length !== q.options.length || q.optWhy[q.a] !== null || q.optWhy.some((x, i) => i !== q.a && !x))) bad.push(q.id); })); return bad; });
   check('every why-tempting note lines up with its options', lens.length === 0, lens.join());
+
+  // ============ 5b. units 8 and 9: generated questions and rotating sets ============
+  await page.evaluate(() => { UNITS.forEach(u => { if (u.n <= 8) { const us = unitState(u.id); us.mastered = true; us.best = 100; us.history = [{ t: 1, right: 7, total: 7, score: 100 }]; } }); save(); });
+  await setPrep('u8'); await goHash('#/unit/u8'); await stepBtn('6 Mastery').click();
+  await page.getByRole('button', { name: /Start/ }).click();
+  const ch8 = await page.evaluate(() => paceInfo().mode === 'challenge' ? 1 : 0);
+  const c8 = await qCounts();
+  check('unit 8 quiz has 5 questions plus 2 generated ones (so it cannot be memorised)', c8.n === 7 + ch8, c8.n);
+  const l8 = await runQuiz(() => ({ correct: true }));
+  check('unit 8 has 2 typed generated questions', l8.filter(x => x.type === 'typed').length === 2);
+  const sets9 = new Set(); let all5 = true;
+  for (let t = 0; t < 6; t++) {
+    await page.evaluate(() => { S.log = []; save(); });       // keep the pace steady so the usual 5-of-6 draw applies
+    await setPrep('u9'); await goHash('#/unit/u9'); await stepBtn('6 Mastery').click();
+    await page.getByRole('button', { name: /Start/ }).click();
+    const ids = []; const n9 = (await qCounts()).n;
+    for (let k = 0; k < n9; k++) { const ex = await page.evaluate(() => window.__expected()); ids.push(ex.id); await answer({ correct: true }); }
+    if (new Set(ids).size !== n9) all5 = false;
+    sets9.add(ids.slice().sort().join());
+  }
+  check('unit 9 draws a different set of questions across attempts, never repeating one within an attempt', sets9.size >= 2 && all5, sets9.size);
+  await page.evaluate(() => { UNITS.forEach(u => { if (u.n === 9) { const us = unitState(u.id); us.mastered = false; } }); save(); });
 
   // ============ 6. pace logic ============
   const pace = await page.evaluate(() => {

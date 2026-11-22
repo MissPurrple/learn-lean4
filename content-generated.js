@@ -18,7 +18,7 @@ const GENS = [
 { id: "g:u0:wei", unit: "u0", tag: "units", make(r) {
   const n = r.int(2, 9), a = (BigInt(n) * 10n ** 18n).toString();
   return { q: "How many wei are in " + n + " ether? Type the number with digits only.", code: null, answer: a,
-    hint: "digits only: your number followed by eighteen zeros",
+    hint: "digits only",
     why: "1 ether is 10^18 wei, a 1 followed by 18 zeros. So " + n + " ether is " + n + " followed by 18 zeros." };
 } },
 
@@ -153,10 +153,30 @@ const GENS = [
   return { q: "∧ means \"and\". What does this line print?", answer: ok ? "true" : "false", hint: "true or false",
     code: "#eval decide (" + a + " < " + b + " ∧ " + b + " < " + c + ")",
     why: "Both parts must be true. " + a + " < " + b + " is " + (a < b) + " and " + b + " < " + c + " is " + (b < c) + ", so the whole thing is " + (ok ? "true" : "false") + "." };
+} },
+
+// ---------- Unit 8 (the transfer invariant, with real numbers) ----------
+{ id: "g:u8:sum", unit: "u8", tag: "invariant", lean: true, make(r) {
+  const small = r.chance(0.5); let s = r.int(3, 30), a = r.int(1, 40); const d = r.int(1, 30);
+  if (small && a <= s) a = s + r.int(1, 12);
+  const after = Math.max(s - a, 0) + (d + a), before = s + d;
+  return { q: "A sender holds " + s + " lamports, a receiver holds " + d + ", and the amount is " + a + ". This line adds the two balances after the transfer, with no check on the amount. What does it print?",
+    code: "#eval (" + s + " - " + a + ") + (" + d + " + " + a + ")", answer: String(after), hint: "a number",
+    why: a <= s ? "The amount is at most the sender's balance, so the subtraction is ordinary and the total is unchanged: " + s + " + " + d + " = " + before + "."
+                : "The amount (" + a + ") is more than the sender's " + s + ", so " + s + " - " + a + " stops at 0. The total becomes " + after + " instead of " + before + ". Money has appeared from nowhere, which is exactly what the check amount ≤ balance prevents." };
+} },
+{ id: "g:u8:holds", unit: "u8", tag: "invariant", lean: true, make(r) {
+  const small = r.chance(0.5); let s = r.int(3, 30), a = r.int(1, 40); const d = r.int(1, 30);
+  if (small && a <= s) a = s + r.int(1, 12);
+  const ok = a <= s;
+  return { q: "Does the total stay the same? This line checks whether the balances before and after add up to the same amount. What does it print?",
+    code: "#eval decide ((" + s + " - " + a + ") + (" + d + " + " + a + ") = " + s + " + " + d + ")", answer: ok ? "true" : "false", hint: "true or false",
+    why: ok ? a + " ≤ " + s + ", so nothing is cut off at 0 and both sides are " + (s + d) + "."
+            : a + " is more than " + s + ", so the subtraction stops at 0 and the two sides differ. The proof in this unit needs amount ≤ balance for exactly this reason." };
 } }
 ];
 
-const GENMAP = {};
+const GENMAP = Object.create(null);
 GENS.forEach(g => { GENMAP[g.id] = g; });
 
 // Builds one fresh question from a family. `r` supplies randomness (see tests for a seeded one).

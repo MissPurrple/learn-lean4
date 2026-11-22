@@ -483,7 +483,7 @@ u9: {
 </ol>
 <p><b>Lake</b> (<code>src/lake</code>) is Lean's build tool and package manager, the counterpart of Rust's Cargo.</p>
 <p><b>Trust has limits, and it is patched.</b> In 2026 researchers reported kernel soundness bugs that could make Lean accept a false proof (one was given CVE-2026-72844). The fixes shipped in Lean 4.32.2. Keep Lean updated, and be careful with Lake dependencies you don't trust.</p>`,
-  worked: { notes: [
+  worked: { readonly: true, notes: [
     "Nat is \"zero, or the successor (the next number) of a Nat\". So 3 is <code>succ (succ (succ zero))</code>.",
     "List is the <code>[]</code> and <code>::</code> pair you used in Unit 5, under its real names <code>nil</code> and <code>cons</code>.",
     "Equality itself (<code>Eq</code>, whose one constructor is <code>refl</code>) is defined in the same file. That is where <code>rfl</code> comes from."

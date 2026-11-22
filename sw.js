@@ -1,6 +1,6 @@
 // Service worker: lets the dashboard open and work with no internet after the first visit.
 // The version below is stamped by build.py so that a new build replaces the old cached copy.
-const CACHE = "learn-lean-4-e94894d8ee";
+const CACHE = "learn-lean-4-91f4fb8a62";
 const FILES = ["./", "./index.html", "./manifest.webmanifest", "./icon-192.png", "./icon-512.png"];
 
 self.addEventListener("install", e => {

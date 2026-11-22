@@ -145,10 +145,9 @@ summary{cursor:pointer;font-weight:700}
 <noscript><p style="padding:1rem">This page needs JavaScript to run.</p></noscript>
 
 <script>
-/*__CONTENT__*/
-</script>
-<script>
+(function () {
 "use strict";
+/*__CONTENT__*/
 /* ===================== constants ===================== */
 const BUILT = "/*__BUILT__*/";             // date of the build, YYYY-MM-DD
 const KEY = "leandash.v1";                 // storage key (unchanged so earlier progress is kept)
@@ -161,14 +160,15 @@ const IDLE_MS = 120000;                    // 2 minutes without interaction = id
 const LOG_CAP = 1500;
 const SLOW_MS = 60000;
 const REVIEW_BATCH = 20;
-const MIN_FIX = 12;                        // characters needed in the "what went wrong" note
-const MIN_PREDICT = 3, MIN_EXPLAIN = 25;
-let RUSH_MS = window.__LEAN_TEST && typeof window.__RUSH_MS === "number" ? window.__RUSH_MS : 3000;   // a multiple-choice answer faster than this earns half credit
+const MIN_FIX = 12, MIN_FIX_WORDS = 3;     // the "what went wrong" note
+const MIN_EXPLAIN = 25, MIN_EXPLAIN_WORDS = 5;
+let RUSH_MS = 3000;                        // a multiple-choice answer faster than this earns half credit
+/*TEST*/ if (window.__LEAN_TEST && typeof window.__RUSH_MS === "number") RUSH_MS = window.__RUSH_MS; /*END-TEST*/
 const CONF_LABEL = { sure: "Sure", unsure: "Unsure", guess: "Guessing" };
 const MONTHS = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
 
 /* ===================== content lookup ===================== */
-const UMAP = {}, QMAP = {};
+const UMAP = Object.create(null), QMAP = Object.create(null);
 UNITS.forEach(u => {
   UMAP[u.id] = u;
   u.quiz.forEach(q => { QMAP[q.id] = { q, u }; });
@@ -210,6 +210,11 @@ function addDays(ts, k) { const d = new Date(startOfDay(ts)); d.setDate(d.getDat
 function pct(a, b) { return b ? Math.round(100 * a / b) : 0; }
 function tagName(t) { return t.replace(/-/g, " "); }
 function link(text, href) { return h("a", { href, target: "_blank", rel: "noopener noreferrer" }, text); }
+function goodNote(t, minChars, minWords) {   // enough characters and enough different words
+  t = String(t).trim();
+  const words = new Set(t.toLowerCase().split(/\s+/).filter(w => /[a-z]/.test(w)));
+  return t.length >= minChars && words.size >= minWords;
+}
 function normAns(s) { return String(s).toLowerCase().replace(/[\s,_]/g, ""); }
 function prettyDate(iso) { const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso); return m ? Number(m[3]) + " " + MONTHS[Number(m[2]) - 1] + " " + m[1] : iso; }
 
@@ -319,6 +324,7 @@ function load() {
       const parsed = JSON.parse(raw), sig = checkSig(parsed);
       integrity = sig === "ok" ? "ok" : sig === "edited" ? "edited" : "legacy";
       S = sanitize(parsed); skippedOnLoad = S._skipped || 0; delete S._skipped;
+      if (integrity === "edited") Object.keys(S.units).forEach(id => { S.units[id].mastered = false; S.units[id].best = 0; });
     }
   } catch (e) { if (e && e.name !== "SyntaxError" && !/Learn Lean 4/.test(e.message || "")) storageOK = false; }
 }
@@ -460,7 +466,7 @@ function paceBanner() {
 }
 function integrityNote() {
   return integrity === "edited"
-    ? h("div", { class: "warn" }, h("b", null, "This progress was changed outside the app. "), "The saved signature doesn't match, so these scores can't be verified. If that wasn't you, restore a backup file. The weekly report will say the data is unverified.")
+    ? h("div", { class: "warn" }, h("b", null, "This progress was changed outside the app. "), "The saved signature doesn't match, so unit mastery and best scores were cleared. Your answer log is kept. To get verified progress back, restore a backup file. The weekly report says the data is unverified.")
     : null;
 }
 function termsList(u) {
@@ -512,7 +518,7 @@ function runQuestions(mount, items, kind, onFinish, opts) {
     const it = items[i], q = it.q, typed = q.type === "typed";
     const perm = typed ? null : shuffle(q.options.map((_, k) => k));       // options are shown in a new order every time
     let picked = null, conf = null, typedVal = ""; const t0 = Date.now();
-    if (window.__LEAN_TEST) window.__expected = () => typed ? { type: "typed", answer: q.answer } : { type: "mc", index: perm.indexOf(q.a), n: perm.length, perm: perm.slice(), id: q.id };
+    /*TEST*/ if (window.__LEAN_TEST) window.__expected = () => typed ? { type: "typed", answer: q.answer } : { type: "mc", index: perm.indexOf(q.a), n: perm.length, perm: perm.slice(), id: q.id }; /*END-TEST*/
     mount.replaceChildren();
     const form = h("section", { class: "card", "aria-label": "Question " + (i + 1) + " of " + items.length });
     form.append(h("div", { class: "tagline" }, (kind === "review" ? "Review. " : "") + "Question " + (i + 1) + " of " + items.length + (kind === "review" ? ". Unit " + it.u.n + ": " + it.u.title : "")));
@@ -583,9 +589,9 @@ function runQuestions(mount, items, kind, onFinish, opts) {
       let fixBox = { value: "" };
       if (!ok) {
         card.append(h("label", { class: "label", for: "fixnote" }, "Before you go on: in a sentence, what went wrong, or why is the right answer right?"));
-        fixBox = h("textarea", { id: "fixnote", class: "prose", rows: "2", maxlength: "300", placeholder: "Write it in your own words", oninput: () => { next.disabled = fixBox.value.trim().length < MIN_FIX; } });
+        fixBox = h("textarea", { id: "fixnote", class: "prose", rows: "2", maxlength: "300", placeholder: "Write it in your own words", oninput: () => { next.disabled = !goodNote(fixBox.value, MIN_FIX, MIN_FIX_WORDS); } });
         card.append(fixBox);
-        card.append(h("p", { class: "muted ui", style: "font-size:.8rem" }, "At least " + MIN_FIX + " characters. Putting the correction into words is what makes it stick."));
+        card.append(h("p", { class: "muted ui", style: "font-size:.8rem" }, "A real sentence, please (at least " + MIN_FIX_WORDS + " different words). Putting the correction into words is what makes it stick."));
       }
       card.append(next);
       mount.append(card);
@@ -660,13 +666,17 @@ function viewUnit(app, u, fresh) {
       const ok = st.fpick === f.answer; const first = rec.tries === 0;
       rec.tries++; if (first) rec.first = ok;
       S.log.push({ t: Date.now(), u: u.id, q: u.id + "-faded", kind: "faded", ok, conf: null, ms: null, first });
-      if (ok) { st.fadedDone = true; us.prep.faded = true; }
+      if (ok) { st.fadedDone = true; us.prep.faded = true; st.fneed = false; } else { st.fneed = true; st.fnote = ""; }
       save(); st.fmsg = { ok }; redraw();
     } }, "Check");
     card.append(fs);
-    if (!done) card.append(fbtn);
+    if (!done && st.fneed) {
+      const again = h("button", { disabled: true, onclick: () => { st.fneed = false; st.fmsg = null; st.fpick = null; st.fadedOrder = null; redraw(); } }, "Try again");
+      card.append(h("label", { class: "label", for: "fnote" }, "Before you try again: in a sentence, why was that option wrong?"),
+        h("textarea", { id: "fnote", class: "prose", rows: "2", maxlength: "300", value: st.fnote || "", oninput: ev => { st.fnote = ev.target.value; again.disabled = !goodNote(st.fnote, MIN_FIX, MIN_FIX_WORDS); } }), again);
+    } else if (!done) card.append(fbtn);
     if (st.fmsg || done) card.append(h("div", { class: "fb " + ((st.fmsg ? st.fmsg.ok : true) ? "ok" : "no"), role: "status" },
-      h("b", null, (st.fmsg ? st.fmsg.ok : true) ? "Right. " : "Not quite. Try another option. "), (st.fmsg ? st.fmsg.ok : true) ? h("span", { html: f.why }) : "Look back at the worked example if you're unsure."));
+      h("b", null, (st.fmsg ? st.fmsg.ok : true) ? "Right. " : "Not quite. "), (st.fmsg ? st.fmsg.ok : true) ? h("span", { html: f.why }) : "Look back at the worked example if you're unsure."));
     body.append(card);
   } else if (st.step === "quiz") {
     renderQuizStep(body, u, st, us, go);
@@ -688,29 +698,36 @@ function viewUnit(app, u, fresh) {
 
 /* Worked example: predict, compare line by line, then explain it back. */
 function renderWorked(body, u, st, us, redraw) {
-  const w = u.worked, outLines = w.output.split("\n");
+  const w = u.worked, outLines = w.output.split("\n"), ro = !!w.readonly;
+  const guessLines = () => st.guess.split("\n").filter(x => x.trim()).length;
+  const enough = () => ro || guessLines() >= outLines.length;
   if (u.prelude) body.append(h("div", { class: "card" }, h("h2", null, "Paste this first"),
     h("p", null, "This example uses code from earlier units. If you try it yourself, paste this into the editor before the example."),
     h("pre", null, u.prelude)));
-  const guessBox = h("textarea", { id: "guess", rows: Math.max(3, Math.min(8, outLines.length)), placeholder: "One line per answer, in the same order as the code", disabled: st.reveal, oninput: ev => { st.guess = ev.target.value; revealBtn.disabled = st.guess.trim().length < MIN_PREDICT; }, value: st.guess });
-  const revealBtn = h("button", { disabled: st.reveal || st.guess.trim().length < MIN_PREDICT, onclick: () => {
+  const guessBox = h("textarea", { id: "guess", rows: Math.max(3, Math.min(8, outLines.length)), placeholder: "One line per answer, in the same order as the code", disabled: st.reveal || ro, oninput: ev => { st.guess = ev.target.value; revealBtn.disabled = !enough(); }, value: st.guess });
+  const revealBtn = h("button", { disabled: st.reveal || !enough(), onclick: () => {
     st.reveal = true;
     const mine = st.guess.split("\n").map(x => x.trim()).filter(Boolean);
     const matched = outLines.filter((l, k) => mine[k] !== undefined && normAns(mine[k]) === normAns(l)).length;
     st.matched = matched;
-    S.log.push({ t: Date.now(), u: u.id, q: u.id + "-predict", kind: "predict", ok: matched === outLines.length, conf: null, ms: null });
+    if (!ro) S.log.push({ t: Date.now(), u: u.id, q: u.id + "-predict", kind: "predict", ok: matched === outLines.length, conf: null, ms: null });
     us.prep.predict = true; save(); redraw();
-  } }, "Reveal Lean's output");
+  } }, ro ? "Show what Lean says" : "Reveal Lean's output");
   body.append(h("div", { class: "card" },
     h("h2", null, "Worked example"),
-    h("p", null, "Read the code and ", h("b", null, "predict the output first"), ". Write your guess, one line per answer. You need to type something before you can reveal what Lean printed."),
+    ro ? h("p", null, "This code is for reading only. Lean rejects it if you paste it into your own file, because it redefines things Lean already has. Read it, then press the button to see what Lean says.")
+       : h("p", null, "Read the code and ", h("b", null, "predict the output first"), ". Write your guess, one line per answer (this example prints " + outLines.length + " line" + (outLines.length === 1 ? "" : "s") + "). You need to write one line for each before you can reveal what Lean printed."),
     h("div", { class: "label" }, "Lean code"), h("pre", null, w.code),
-    h("label", { class: "label", for: "guess" }, "Your prediction"), guessBox,
+    !ro && h("label", { class: "label", for: "guess" }, "Your prediction"), !ro && guessBox,
     !st.reveal && revealBtn));
   if (!st.reveal) return;
+  if (ro) {
+    body.append(h("div", { class: "card" }, h("div", { class: "label" }, "What Lean says"), h("pre", { class: "out" }, w.output), h("h3", null, "Notes"), h("ul", null, w.notes.map(n => h("li", { html: n })))));
+    if (!u.selfx) { us.prep.explain = true; return; }
+  }
   const mine = st.guess.split("\n").map(x => x.trim()).filter(Boolean);
   st.matched = outLines.filter((l, k) => mine[k] !== undefined && normAns(mine[k]) === normAns(l)).length;
-  body.append(h("div", { class: "card" },
+  if (!ro) body.append(h("div", { class: "card" },
     h("div", { class: "label" }, "Your prediction against real Lean 4.36.0 output"),
     h("div", { class: "tbl" }, h("table", { class: "cmp" },
       h("thead", null, h("tr", null, h("th", null, ""), h("th", null, "You wrote"), h("th", null, "Lean printed"))),
@@ -726,9 +743,9 @@ function renderWorked(body, u, st, us, redraw) {
   if (done && !st.sxModel) {
     card.append(h("div", { class: "label" }, "Your answer"), h("p", null, us.explain.text), h("div", { class: "label" }, "Model answer"), h("p", { html: sx.model }), h("p", { class: "muted ui", style: "font-size:.85rem" }, "You rated yours: " + us.explain.rating + "."));
   } else {
-    const ta = h("textarea", { class: "prose", rows: "4", placeholder: "Write it as if you were explaining to a friend", value: st.sx, oninput: ev => { st.sx = ev.target.value; show.disabled = st.sx.trim().length < MIN_EXPLAIN; } });
-    const show = h("button", { disabled: st.sx.trim().length < MIN_EXPLAIN, onclick: () => { st.sxModel = true; redraw(); } }, "Show the model answer");
-    card.append(ta, h("p", { class: "muted ui", style: "font-size:.8rem" }, "Write at least " + MIN_EXPLAIN + " characters before the model answer appears. Explaining in your own words shows you what you actually understand."));
+    const ta = h("textarea", { class: "prose", rows: "4", placeholder: "Write it as if you were explaining to a friend", value: st.sx, oninput: ev => { st.sx = ev.target.value; show.disabled = !goodNote(st.sx, MIN_EXPLAIN, MIN_EXPLAIN_WORDS); } });
+    const show = h("button", { disabled: !goodNote(st.sx, MIN_EXPLAIN, MIN_EXPLAIN_WORDS), onclick: () => { st.sxModel = true; redraw(); } }, "Show the model answer");
+    card.append(ta, h("p", { class: "muted ui", style: "font-size:.8rem" }, "Write a few real sentences (at least " + MIN_EXPLAIN_WORDS + " different words) before the model answer appears. Explaining in your own words shows you what you actually understand."));
     if (!st.sxModel) card.append(show);
     else {
       card.append(h("div", { class: "label" }, "Model answer"), h("p", { html: sx.model }), h("p", null, "Be honest: how close was yours?"));
@@ -743,13 +760,22 @@ function renderQuizStep(body, u, st, us, go) {
   const mode = paceInfo().mode;
   const mount = h("div");
   function start() {
-    const stat = u.quiz.map(q => ({ q: Object.assign({ type: "mc" }, q), u }));
-    if (mode === "challenge") stat.push({ q: Object.assign({ type: "mc" }, u.challenge), u });
     const fams = shuffle(GENS.filter(g => g.unit === u.id));
+    let pool = u.quiz.slice();
+    if (!fams.length) {                              // no generator for this unit: draw a different set from the six each time
+      pool = shuffle(u.quiz.concat([u.challenge]));
+      if (mode !== "challenge") pool = pool.slice(0, u.quiz.length);
+    }
+    const stat = pool.map(q => ({ q: Object.assign({ type: "mc" }, q), u }));
+    if (mode === "challenge" && fams.length) stat.push({ q: Object.assign({ type: "mc" }, u.challenge), u });
     const gens = []; for (let k = 0; k < Math.min(2, Math.max(fams.length, 0)); k++) gens.push({ q: genBuild(fams[k], R), u });
     if (fams.length === 1) gens.push({ q: genBuild(fams[0], R), u });
     const all = stat.concat(gens);
     const items = us.attempts > 0 ? shuffle(all) : all;
+    us.attempts++;                                   // counts from the moment it starts, so abandoning a quiz doesn't hide it
+    us.history.push({ t: Date.now(), right: 0, total: items.length, score: 0 });
+    us.history = us.history.slice(-30);
+    save();
     body.replaceChildren(mount);
     runQuestions(mount, items, "quiz", finish, { keyIdeas: mode === "support" });
   }
@@ -757,8 +783,10 @@ function renderQuizStep(body, u, st, us, go) {
     const right = results.filter(r => r.ok).length, pts = results.reduce((a, r) => a + r.credit, 0);
     const score = Math.round(100 * pts / results.length), passed = pts * 100 >= PASS_PCT * results.length;
     const was = us.mastered;
-    us.attempts++; us.best = Math.max(us.best, score);
-    us.history.push({ t: Date.now(), right, total: results.length, score }); us.history = us.history.slice(-30);
+    us.best = Math.max(us.best, score);
+    const entry = us.history[us.history.length - 1];
+    if (entry) { entry.t = Date.now(); entry.right = right; entry.total = results.length; entry.score = score; }
+    else us.history.push({ t: Date.now(), right, total: results.length, score });
     if (passed) us.mastered = true;
     save(); renderNav();
     mount.replaceChildren();
@@ -867,7 +895,7 @@ function buildReport() {
   L.push("Period: " + days[0] + " to " + days[6] + " (last 7 days, local time)");
   L.push("Generated: " + dayKey(now) + " " + pad(d.getHours()) + ":" + pad(d.getMinutes()) + ", app version of " + BUILT);
   L.push("Course: Lean 4 through blockchain examples (Ethereum and Solana), " + UNITS.length + " units (Unit 0 to " + (UNITS.length - 1) + "), first-year level");
-  if (integrity === "edited") L.push("DATA CHECK: this progress was changed outside the app. The numbers below can't be verified.");
+  if (integrity === "edited") L.push("DATA CHECK: this progress was changed outside the app, so mastery and best scores were cleared. The numbers below can't be verified.");
   L.push("");
   L.push("PROGRESS");
   L.push("Units mastered: " + UNITS.filter(isMastered).length + " of " + UNITS.length);
@@ -1156,9 +1184,11 @@ function viewMethod(app) {
         h("li", null, "Numeric questions are made fresh with new numbers each time, and you type the answer. There's no stored answer to look up or memorise, and no list to guess from."),
         h("li", null, "Multiple-choice options appear in a new order every time."),
         h("li", null, "A right answer marked Guessing, or a multiple-choice answer given in under three seconds, counts half."),
-        h("li", null, "The quiz stays locked until you've done the groundwork for the unit."),
-        h("li", null, "Your saved progress is signed. If it is edited outside the app, the app says so, and the weekly report says so too.")),
-      h("p", null, "Every question that has code in it was checked against real Lean 4.36.0, including thousands of randomly generated ones."))),
+        h("li", null, "The quiz stays locked until you've done the groundwork for the unit: a prediction with one line per answer, a right fill-the-blank (a wrong pick needs a sentence about why before you try again), and an explanation in your own words."),
+        h("li", null, "Leaving a quiz half way still counts as an attempt, so you can't peek at answers and walk away."),
+        h("li", null, "Your saved progress is signed. If it is edited outside the app, the app says so, clears unit mastery and best scores, and says so in the weekly report. Restoring one of your own backup files brings the real progress back.")),
+      h("p", null, "The signature is a tripwire, not a lock. The code that checks it is in the page, so someone who reads the code can forge it."),
+      h("p", null, "Every question that has code in it was checked against real Lean 4.36.0, including hundreds of randomly generated ones."))),
     sec("What isn't backed by research", h("div", null,
       h("p", null, "Asking you to choose Sure, Unsure or Guessing has no research claim made for it here. It's a way to spot answers that were confidently wrong."),
       h("p", null, "The pace thresholds (support below " + PACE.supportBelowPct + "%, challenge at " + PACE.challengeAtPct + "% or more), the box intervals, the half-credit rules and the 2-minute idle cutoff are design choices, not numbers taken from the studies. The weekly report exists so you can tell Claude what isn't working and have them adjusted."))));
@@ -1231,6 +1261,16 @@ if ("serviceWorker" in navigator && /^https?:$/.test(location.protocol)) {   // 
   navigator.serviceWorker.register("sw.js").catch(() => {});
 }
 route();
+
+/*TEST*/
+if (window.__LEAN_TEST) {   // test builds only: lets the browser tests reach the app's internals
+  const ro = { UNITS, UMAP, QMAP, GENS, GENMAP, KEY, BUILT, blank, save, unitState, isMastered, unitStatus, paceInfo, boxCounts, dueIds, startOfDay, dayKey, prettyDate, normAns, shuffle, sanitize, signText, plain, buildItem, genBuild, route, checkSig, goodNote };
+  Object.keys(ro).forEach(k => { window[k] = ro[k]; });
+  const rw = { S: [() => S, v => { S = v; }], integrity: [() => integrity, v => { integrity = v; }], RUSH_MS: [() => RUSH_MS, v => { RUSH_MS = v; }], lastAct: [() => lastAct, v => { lastAct = v; }] };
+  Object.keys(rw).forEach(k => Object.defineProperty(window, k, { get: rw[k][0], set: rw[k][1], configurable: true }));
+}
+/*END-TEST*/
+})();
 </script>
 </body>
 </html>

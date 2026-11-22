@@ -1,4 +1,5 @@
 // Progress page, glossary, backup and signature checks, every unit rendering, and offline mode.
+//   python3 build.py --test
 //   NODE_PATH=$(npm root -g) node tests/e2e-new.js /tmp
 const { chromium } = require('playwright');
 const http = require('http');
@@ -7,7 +8,9 @@ const os = require('os');
 const crypto = require('crypto');
 const path = require('path');
 const root = path.resolve(__dirname, '..');
-const file = 'file://' + path.join(root, 'index.html');
+const buildDir = path.join(root, 'tests', 'build');          // test build, with hooks
+const file = 'file://' + path.join(buildDir, 'index.html');
+const prodFile = 'file://' + path.join(root, 'index.html'); // production build, hooks removed
 const results = [];
 const check = (name, cond, extra) => results.push([cond ? 'PASS' : 'FAIL', name, extra === undefined ? '' : String(extra)]);
 
@@ -15,8 +18,8 @@ function serve() {
   const types = { '.html': 'text/html', '.js': 'text/javascript', '.png': 'image/png', '.webmanifest': 'application/manifest+json' };
   const srv = http.createServer((req, res) => {
     let p = decodeURIComponent(req.url.split('?')[0]); if (p === '/') p = '/index.html';
-    const f = path.join(root, p);
-    if (!f.startsWith(root) || !fs.existsSync(f) || fs.statSync(f).isDirectory()) { res.writeHead(404); return res.end('no'); }
+    const f = path.join(buildDir, p);
+    if (!f.startsWith(buildDir) || !fs.existsSync(f) || fs.statSync(f).isDirectory()) { res.writeHead(404); return res.end('no'); }
     res.writeHead(200, { 'Content-Type': types[path.extname(f)] || 'application/octet-stream' });
     fs.createReadStream(f).pipe(res);
   });
@@ -130,6 +133,7 @@ function serve() {
   await lsEdit('o.units.u2 = { best: 100, mastered: true, attempts: 1, practice: false, history: [{ t: 1, right: 7, total: 7, score: 100 }], prep: { read: true, predict: true, faded: true, explain: true }, explain: null };');
   await page.goto(file + '#/map');
   check('editing localStorage by hand is noticed (banner on the map)', (await page.locator('main').innerText()).includes('changed outside the app'));
+  check('and unit mastery and best scores are cleared, including the forged one', await page.evaluate(() => UNITS.every(u => !isMastered(u) && (S.units[u.id] ? S.units[u.id].best === 0 : true)) && S.log.length === 10));
   await page.goto(file + '#/report');
   check('the weekly report says the data is unverified', (await page.locator('#reportText').inputValue()).includes('DATA CHECK'));
   await page.locator('#notes').fill('x');                      // any save re-signs; the banner must remain until a restore
@@ -137,7 +141,7 @@ function serve() {
   await page.locator('input[type=file]').setInputFiles(bpath);
   await page.waitForFunction(() => integrity === 'ok', null, { timeout: 5000 }).catch(() => {});
   await page.goto(file + '#/map'); await page.reload();
-  check('restoring a genuine backup clears the banner', !(await page.locator('main').innerText()).includes('changed outside the app'));
+  check('restoring a genuine backup clears the banner and brings real mastery back', !(await page.locator('main').innerText()).includes('changed outside the app') && (await page.evaluate(() => isMastered(UMAP.u0) && !isMastered(UMAP.u2))));
   // legacy data (saved before signing existed) loads quietly and is signed on the next save
   await lsEdit('delete o.sig;');
   await page.goto(file + '#/map');
@@ -160,6 +164,12 @@ function serve() {
   await mal.reload();
   check('wrong-shaped saved data does not crash the page', (await mal.locator('h1').innerText()).length > 0);
   await mal.close();
+  for (const h of ['__proto__', 'constructor', 'toString', 'hasOwnProperty']) {
+    await page.goto(file + '#/unit/' + h);
+  }
+  check('odd unit addresses (__proto__, constructor, ...) fall back to the map and do not crash', (await page.locator('h1').innerText()).includes('Lean 4') && (await page.evaluate(() => location.hash)) === '#/map');
+  const protoLog = await page.evaluate(() => sanitize({ v: 1, log: [{ q: '__proto__', u: 'u1', kind: 'quiz', ok: true, t: 1 }, { q: 'constructor', u: 'u1', kind: 'review', ok: true, t: 1 }], cards: JSON.parse('{"__proto__":{"box":2,"due":1}}') }));
+  check('poisoned ids in stored data are dropped', protoLog.log.length === 0 && Object.keys(protoLog.cards).length === 0);
   const bumped = await page.evaluate(() => { S.lastBackup = 0; for (let i = 0; i < 3; i++) S.log.push({ t: Date.now(), u: 'u1', q: 'u1q1', kind: 'quiz', ok: true, conf: null, ms: 1 }); save(); return true; });
   await page.goto(file + '#/map'); await page.reload();
   check('backup reminder shown after 7 days without one, and mentions the vault', /haven't saved a backup/.test(await page.locator('main').innerText()) && /vault/.test(await page.locator('main').innerText()));
@@ -172,7 +182,11 @@ function serve() {
     await page.goto(file + '#/unit/' + id); await page.reload();
     for (const lb of ['1 Goals', '2 Explain', '3 Worked', '4 Solidity', '5 Fill', '6 Mastery', '7 Practice']) {
       await page.getByRole('button', { name: new RegExp('^' + lb) }).click();
-      if (lb.startsWith('3')) { await page.locator('#guess').fill('abc'); await page.getByRole('button', { name: /Reveal/ }).click(); }
+      if (lb.startsWith('3')) {
+        const n = await page.evaluate(id => UMAP[id].worked.output.split('\n').length, id);
+        if (await page.locator('#guess').count()) await page.locator('#guess').fill(Array.from({ length: n }, (_, i) => 'x' + i).join('\n'));
+        await page.getByRole('button', { name: /Reveal|Show what Lean says/ }).click();
+      }
       const t = await page.locator('main').innerText();
       for (const tok of ['undefined', '[object', '&quot;', '&lt;', '&amp;', '\\"', 'NaN']) if (t.includes(tok)) bad.push(id + ' ' + lb + ' contains ' + tok);
       if (lb.startsWith('1') && (await page.locator('dl.terms dt').count()) < 5) bad.push(id + ' has fewer than 5 terms');
@@ -185,10 +199,22 @@ function serve() {
   const prel = await page.evaluate(() => ['u5', 'u6', 'u8'].map(id => UMAP[id].prelude.includes('structure Account')));
   check('units 5, 6 and 8 carry the Account code they depend on', prel.every(Boolean));
 
+  // ---------- the production page has no test hooks and no console-reachable internals
+  const prodSrc = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
+  check('production source has no test hook', !/__LEAN_TEST|__expected|__RUSH_MS/.test(prodSrc));
+  const pctx = await browser.newContext(); const pp = await pctx.newPage();
+  const perrs = []; pp.on('pageerror', e => perrs.push(e.message)); pp.on('console', m => { if (m.type() === 'error') perrs.push(m.text()); });
+  await pp.addInitScript(() => { window.__LEAN_TEST = true; window.__RUSH_MS = 0; });     // even if a user sets the flags
+  await pp.goto(prodFile);
+  const leaked = await pp.evaluate(() => ['S', 'UNITS', 'save', 'unitState', 'signText', 'GENS', 'genBuild', 'QMAP', 'RUSH_MS', '__expected'].filter(n => typeof window[n] !== 'undefined' || (() => { try { return typeof eval(n) !== 'undefined'; } catch (e) { return false; } })()));
+  check('in the production page the app\'s internals are not reachable from the console', leaked.length === 0, leaked.join());
+  check('production page still starts normally', (await pp.locator('h1').innerText()) === 'Start here' && perrs.length === 0, perrs.join());
+  await pctx.close();
+
   // ---------- offline support over http
   const srv = await serve();
   const base = 'http://127.0.0.1:' + srv.address().port + '/';
-  const octx = await browser.newContext(); const op = await octx.newPage();
+  const octx = await browser.newContext(); await octx.addInitScript(() => { window.__LEAN_TEST = true; }); const op = await octx.newPage();
   op.on('pageerror', e => errors.push('offline pageerror: ' + e.message));
   await op.goto(base);
   await op.evaluate(() => navigator.serviceWorker.ready.then(() => true));
